@@ -48,7 +48,7 @@ import {
   Calendar, 
   Clock, 
   Activity,
-  DumbellIcon,
+  DumbbellIcon,
   Edit,
   ArrowRight,
   ChevronDown
@@ -475,7 +475,7 @@ const WorkoutPlanBuilder = () => {
                     ))
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
-                      <DumbellIcon className="h-12 w-12 mb-4 text-gray-300" />
+                      <DumbbellIcon className="h-12 w-12 mb-4 text-gray-300" />
                       <h3 className="text-lg font-medium mb-2">Chưa có buổi tập nào</h3>
                       <p className="mb-4">Hãy thêm buổi tập mới cho {getDayLabel(day.value)}</p>
                       <Button onClick={() => {
