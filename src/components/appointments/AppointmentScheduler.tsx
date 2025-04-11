@@ -44,6 +44,7 @@ const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({
   // Render appointment for weekly view
   const renderWeeklyAppointment = (day, appointment) => (
     <AppointmentPopover 
+      key={appointment.id}
       appointment={appointment} 
       appointmentTypeNameById={appointmentTypeNameById} 
       openEditDialog={openEditDialog} 
@@ -70,6 +71,7 @@ const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({
   // Render appointment for monthly view
   const renderMonthlyAppointment = (day, appointment) => (
     <AppointmentPopover 
+      key={appointment.id}
       appointment={appointment} 
       appointmentTypeNameById={appointmentTypeNameById} 
       openEditDialog={openEditDialog} 

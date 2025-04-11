@@ -75,23 +75,20 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                 {formatDate(day, "d")}
               </div>
               {dayAppointments.map((appointment) => (
-                renderAppointment ? (
-                  <React.Fragment key={appointment.id}>
-                    {renderAppointment(day, appointment)}
-                  </React.Fragment>
-                ) : (
-                  <div
-                    key={appointment.id}
-                    className={cn(
-                      "text-xs p-1 mb-1 rounded truncate",
-                      appointment.status === "completed"
-                        ? "bg-gray-200"
-                        : "bg-primary/10 text-primary font-medium"
-                    )}
-                  >
-                    {appointment.time} - {appointment.name.split(" ")[0]}
-                  </div>
-                )
+                <React.Fragment key={appointment.id}>
+                  {renderAppointment ? renderAppointment(day, appointment) : (
+                    <div
+                      className={cn(
+                        "text-xs p-1 mb-1 rounded truncate",
+                        appointment.status === "completed"
+                          ? "bg-gray-200"
+                          : "bg-primary/10 text-primary font-medium"
+                      )}
+                    >
+                      {appointment.time} - {appointment.name.split(" ")[0]}
+                    </div>
+                  )}
+                </React.Fragment>
               ))}
             </div>
           );
