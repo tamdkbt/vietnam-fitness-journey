@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Card, 
@@ -216,8 +217,8 @@ const DIFFICULTY_LEVELS = [
 const WorkoutPlanBuilder = () => {
   const [workouts, setWorkouts] = useState<Workout[]>(SAMPLE_WORKOUT);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredMuscle, setFilteredMuscle] = useState<string>("");
-  const [filteredDifficulty, setFilteredDifficulty] = useState<string>("");
+  const [filteredMuscle, setFilteredMuscle] = useState<string>("all");
+  const [filteredDifficulty, setFilteredDifficulty] = useState<string>("all");
   const [selectedDay, setSelectedDay] = useState<string>("monday");
   const [activeTab, setActiveTab] = useState<string>("exercises");
   const [currentEditingWorkout, setCurrentEditingWorkout] = useState<Workout | null>(null);
@@ -232,8 +233,8 @@ const WorkoutPlanBuilder = () => {
   const filteredExercises = EXERCISES.filter((exercise) => {
     const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          exercise.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesMuscle = filteredMuscle ? exercise.muscle === filteredMuscle : true;
-    const matchesDifficulty = filteredDifficulty ? exercise.difficulty === filteredDifficulty : true;
+    const matchesMuscle = filteredMuscle === "all" ? true : exercise.muscle === filteredMuscle;
+    const matchesDifficulty = filteredDifficulty === "all" ? true : exercise.difficulty === filteredDifficulty;
     
     return matchesSearch && matchesMuscle && matchesDifficulty;
   });
