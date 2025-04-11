@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -251,6 +250,20 @@ const WorkoutPlanBuilder = () => {
   const [showDeleteExerciseDialog, setShowDeleteExerciseDialog] = useState<{workoutId: string, exerciseId: string} | null>(null);
   const [showDeleteWorkoutDialog, setShowDeleteWorkoutDialog] = useState<string | null>(null);
   const [exerciseDetailModal, setExerciseDetailModal] = useState<Exercise | null>(null);
+  const [showAddNewExerciseModal, setShowAddNewExerciseModal] = useState<boolean>(false);
+  const [newExercise, setNewExercise] = useState<{
+    name: string;
+    description: string;
+    muscle: string;
+    difficulty: string;
+    duration: number;
+  }>({
+    name: "",
+    description: "",
+    muscle: "abs",
+    difficulty: "beginner",
+    duration: 10
+  });
 
   const filteredExercises = EXERCISES.filter((exercise) => {
     const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -435,6 +448,47 @@ const WorkoutPlanBuilder = () => {
 
   const showExerciseDetails = (exercise: Exercise) => {
     setExerciseDetailModal(exercise);
+  };
+
+  const addNewExerciseToLibrary = () => {
+    if (!newExercise.name.trim()) {
+      toast.error("Vui lòng nhập tên bài tập");
+      return;
+    }
+    
+    if (!newExercise.description.trim()) {
+      toast.error("Vui lòng nhập mô tả bài tập");
+      return;
+    }
+    
+    if (newExercise.duration <= 0) {
+      toast.error("Thời gian thực hiện phải lớn hơn 0");
+      return;
+    }
+    
+    const newExerciseId = `ex${Date.now()}`;
+    
+    const exerciseToAdd: Exercise = {
+      id: newExerciseId,
+      name: newExercise.name,
+      description: newExercise.description,
+      muscle: newExercise.muscle,
+      difficulty: newExercise.difficulty,
+      duration: newExercise.duration
+    };
+    
+    EXERCISES.unshift(exerciseToAdd);
+    
+    setShowAddNewExerciseModal(false);
+    setNewExercise({
+      name: "",
+      description: "",
+      muscle: "abs",
+      difficulty: "beginner",
+      duration: 10
+    });
+    
+    toast.success("Đã thêm bài tập mới thành công");
   };
 
   return (
@@ -672,6 +726,15 @@ const WorkoutPlanBuilder = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={() => setShowAddNewExerciseModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm bài tập mới
+              </Button>
             </div>
           </div>
           <CardDescription>
@@ -843,7 +906,6 @@ const WorkoutPlanBuilder = () => {
         </CardContent>
       </Card>
 
-      {/* Xác nhận xóa bài tập */}
       <AlertDialog open={!!showDeleteExerciseDialog} onOpenChange={(open) => !open && setShowDeleteExerciseDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -872,7 +934,6 @@ const WorkoutPlanBuilder = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Xác nhận xóa buổi tập */}
       <AlertDialog open={!!showDeleteWorkoutDialog} onOpenChange={(open) => !open && setShowDeleteWorkoutDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -898,7 +959,6 @@ const WorkoutPlanBuilder = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Chi tiết bài tập */}
       <AlertDialog open={!!exerciseDetailModal} onOpenChange={(open) => !open && setExerciseDetailModal(null)}>
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
@@ -948,9 +1008,102 @@ const WorkoutPlanBuilder = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={showAddNewExerciseModal} onOpenChange={setShowAddNewExerciseModal}>
+        <AlertDialogContent className="sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Thêm bài tập mới</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tạo một bài tập mới cho thư viện bài tập. Bài tập này sẽ xuất hiện trong danh sách các bài tập có sẵn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="exerciseName">Tên bài tập *</Label>
+              <Input
+                id="exerciseName"
+                value={newExercise.name}
+                onChange={(e) => setNewExercise({...newExercise, name: e.target.value})}
+                placeholder="Ví dụ: Nâng tạ trên vai"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="exerciseDescription">Mô tả bài tập *</Label>
+              <Input
+                id="exerciseDescription"
+                value={newExercise.description}
+                onChange={(e) => setNewExercise({...newExercise, description: e.target.value})}
+                placeholder="Mô tả cách thực hiện bài tập"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="exerciseMuscle">Nhóm cơ</Label>
+                <Select
+                  value={newExercise.muscle}
+                  onValueChange={(value) => setNewExercise({...newExercise, muscle: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn nhóm cơ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MUSCLE_GROUPS.map((muscle) => (
+                      <SelectItem key={muscle.value} value={muscle.value}>
+                        {muscle.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="exerciseDifficulty">Độ khó</Label>
+                <Select
+                  value={newExercise.difficulty}
+                  onValueChange={(value) => setNewExercise({...newExercise, difficulty: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn độ khó" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DIFFICULTY_LEVELS.map((level) => (
+                      <SelectItem key={level.value} value={level.value}>
+                        {level.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="exerciseDuration">
+                Thời gian thực hiện (giây) *
+              </Label>
+              <Input
+                id="exerciseDuration"
+                type="number"
+                min="1"
+                value={newExercise.duration}
+                onChange={(e) => setNewExercise({...newExercise, duration: parseInt(e.target.value)})}
+              />
+            </div>
+          </div>
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={addNewExerciseToLibrary} className="bg-primary">
+              <Plus className="mr-2 h-4 w-4" />
+              Thêm bài tập
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
 export default WorkoutPlanBuilder;
-
