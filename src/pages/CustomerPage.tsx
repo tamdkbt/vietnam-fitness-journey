@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Users, Search, MoreHorizontal, Calendar, Dumbbell, Utensils } from "lucide-react";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ export type Customer = {
 const CustomerPage = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Lấy danh sách khách hàng từ localStorage
@@ -79,24 +81,11 @@ const CustomerPage = () => {
     toast.success("Đã xóa khách hàng thành công");
   };
 
-  // Chức năng tạo lịch hẹn cho khách hàng cụ thể
-  const createAppointment = (customer: Customer) => {
-    // Lưu khách hàng được chọn vào localStorage để sử dụng ở trang lịch hẹn
+  // Chức năng chọn khách hàng và điều hướng đến trang tương ứng
+  const selectCustomerAndNavigate = (customer: Customer, destination: string) => {
     localStorage.setItem("selectedCustomer", JSON.stringify(customer));
-    // Chuyển hướng đến trang lịch hẹn
-    window.location.href = "/appointments";
-  };
-
-  // Chức năng tạo lịch tập cho khách hàng cụ thể
-  const createWorkout = (customer: Customer) => {
-    localStorage.setItem("selectedCustomer", JSON.stringify(customer));
-    window.location.href = "/workouts";
-  };
-
-  // Chức năng tạo kế hoạch dinh dưỡng cho khách hàng cụ thể
-  const createMealPlan = (customer: Customer) => {
-    localStorage.setItem("selectedCustomer", JSON.stringify(customer));
-    window.location.href = "/meals";
+    navigate(`/${destination}`);
+    toast.success(`Đã chọn khách hàng ${customer.name}`);
   };
 
   const getGoalBadgeColor = (goal: string) => {
@@ -177,12 +166,16 @@ const CustomerPage = () => {
                       <TableHead>Thông tin</TableHead>
                       <TableHead>Mục tiêu</TableHead>
                       <TableHead>Thời gian tập</TableHead>
-                      <TableHead></TableHead>
+                      <TableHead>Tùy chọn</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCustomers.map((customer) => (
-                      <TableRow key={customer.id}>
+                      <TableRow 
+                        key={customer.id} 
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => selectCustomerAndNavigate(customer, "appointments")}
+                      >
                         <TableCell className="font-medium">{customer.name}</TableCell>
                         <TableCell>
                           {customer.age} tuổi, {customer.gender === 'male' ? 'Nam' : customer.gender === 'female' ? 'Nữ' : 'Khác'}
@@ -200,37 +193,51 @@ const CustomerPage = () => {
                           {customer.preferredTime === 'morning' ? 'Buổi sáng' :
                            customer.preferredTime === 'afternoon' ? 'Buổi chiều' : 'Buổi tối'}
                         </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Tùy chọn</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => createAppointment(customer)}>
-                                <Calendar className="h-4 w-4 mr-2" />
-                                Tạo lịch hẹn
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => createWorkout(customer)}>
-                                <Dumbbell className="h-4 w-4 mr-2" />
-                                Tạo lịch tập
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => createMealPlan(customer)}>
-                                <Utensils className="h-4 w-4 mr-2" />
-                                Tạo kế hoạch dinh dưỡng
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={() => handleDeleteCustomer(customer.id)}
-                              >
-                                Xóa khách hàng
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => selectCustomerAndNavigate(customer, "appointments")}
+                              className="flex items-center gap-1"
+                            >
+                              <Calendar className="h-4 w-4" />
+                              <span className="hidden md:inline">Lịch hẹn</span>
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => selectCustomerAndNavigate(customer, "workouts")}
+                              className="flex items-center gap-1"
+                            >
+                              <Dumbbell className="h-4 w-4" />
+                              <span className="hidden md:inline">Lịch tập</span>
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => selectCustomerAndNavigate(customer, "meals")}
+                              className="flex items-center gap-1"
+                            >
+                              <Utensils className="h-4 w-4" />
+                              <span className="hidden md:inline">Dinh dưỡng</span>
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem 
+                                  className="text-red-600"
+                                  onClick={() => handleDeleteCustomer(customer.id)}
+                                >
+                                  Xóa khách hàng
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
