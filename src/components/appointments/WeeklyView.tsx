@@ -1,7 +1,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { User, Check } from "lucide-react";
+import { User } from "lucide-react";
 import { Appointment, HOURS, AppointmentType } from "../../types/appointment";
 import { checkIsToday, formatDate } from "../../utils/dateUtils";
 
@@ -10,13 +10,15 @@ interface WeeklyViewProps {
   appointments: Appointment[];
   appointmentTypes: AppointmentType[];
   handleTimeSlotClick: (day: Date, time: string) => void;
+  renderAppointment?: (day: Date, appointment: Appointment) => React.ReactNode;
 }
 
 const WeeklyView: React.FC<WeeklyViewProps> = ({ 
   daysToDisplay, 
   appointments, 
   appointmentTypes,
-  handleTimeSlotClick 
+  handleTimeSlotClick,
+  renderAppointment
 }) => {
   const appointmentTypeNameById = (id: string) => {
     return appointmentTypes.find(type => type.id === id)?.name || id;
@@ -71,24 +73,26 @@ const WeeklyView: React.FC<WeeklyViewProps> = ({
                         : "bg-primary/10 border-primary/30"
                     ) : "hover:bg-accent hover:border-primary/20 cursor-pointer"
                   )}
-                  onClick={() => handleTimeSlotClick(day, hour)}
+                  onClick={() => {
+                    if (!appointmentAtThisTime) {
+                      handleTimeSlotClick(day, hour);
+                    }
+                  }}
                 >
                   {appointmentAtThisTime && (
-                    <div className="p-2 h-full flex flex-col">
-                      <div className="font-medium text-sm truncate">
-                        {appointmentAtThisTime.name}
-                      </div>
-                      <div className="text-xs text-gray-500 flex items-center mt-1">
-                        <User className="h-3 w-3 mr-1" />
-                        {appointmentTypeNameById(appointmentAtThisTime.type)}
-                      </div>
-                      {appointmentAtThisTime.status === "completed" && (
-                        <div className="text-xs text-gray-500 flex items-center mt-1">
-                          <Check className="h-3 w-3 mr-1" />
-                          Đã hoàn thành
+                    renderAppointment ? (
+                      renderAppointment(day, appointmentAtThisTime)
+                    ) : (
+                      <div className="p-2 h-full flex flex-col">
+                        <div className="font-medium text-sm truncate">
+                          {appointmentAtThisTime.name}
                         </div>
-                      )}
-                    </div>
+                        <div className="text-xs text-gray-500 flex items-center mt-1">
+                          <User className="h-3 w-3 mr-1" />
+                          {appointmentTypeNameById(appointmentAtThisTime.type)}
+                        </div>
+                      </div>
+                    )
                   )}
                 </div>
               );

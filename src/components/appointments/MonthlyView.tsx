@@ -12,7 +12,7 @@ interface MonthlyViewProps {
   currentDate: Date;
   appointments: Appointment[];
   handleDayClick: (day: Date) => void;
-  handleAppointmentClick: (day: Date, appointment: Appointment) => void;
+  renderAppointment?: (day: Date, appointment: Appointment) => React.ReactNode;
 }
 
 const MonthlyView: React.FC<MonthlyViewProps> = ({ 
@@ -20,7 +20,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
   currentDate,
   appointments, 
   handleDayClick,
-  handleAppointmentClick
+  renderAppointment
 }) => {
   const dayNames = Array.from({ length: 7 }, (_, i) => 
     format(new Date(2021, 0, i + 1), 'EEEEEE', { locale: vi })
@@ -75,21 +75,23 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                 {formatDate(day, "d")}
               </div>
               {dayAppointments.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className={cn(
-                    "text-xs p-1 mb-1 rounded truncate",
-                    appointment.status === "completed"
-                      ? "bg-gray-200"
-                      : "bg-primary/10 text-primary font-medium"
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAppointmentClick(day, appointment);
-                  }}
-                >
-                  {appointment.time} - {appointment.name.split(" ")[0]}
-                </div>
+                renderAppointment ? (
+                  <React.Fragment key={appointment.id}>
+                    {renderAppointment(day, appointment)}
+                  </React.Fragment>
+                ) : (
+                  <div
+                    key={appointment.id}
+                    className={cn(
+                      "text-xs p-1 mb-1 rounded truncate",
+                      appointment.status === "completed"
+                        ? "bg-gray-200"
+                        : "bg-primary/10 text-primary font-medium"
+                    )}
+                  >
+                    {appointment.time} - {appointment.name.split(" ")[0]}
+                  </div>
+                )
               ))}
             </div>
           );
