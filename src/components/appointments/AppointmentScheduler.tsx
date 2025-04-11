@@ -1,13 +1,6 @@
 
-import React, { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -15,223 +8,101 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  ChevronLeft,
-  ChevronRight,
-  Calendar as CalendarIcon,
-  Clock,
-  Edit,
-  Eye,
-  Check,
-  UserCheck
-} from "lucide-react";
-import { toast } from "sonner";
-import { addDays } from "date-fns";
-import { APPOINTMENT_TYPES, HOURS, Appointment, AppointmentSchedulerProps } from "../../types/appointment";
-import { 
-  getDaysToDisplay, 
-  formatDate, 
-  navigateNext, 
-  navigatePrevious 
-} from "../../utils/dateUtils";
+import { UserCheck, Check } from "lucide-react";
+import { formatDate, getDaysToDisplay } from "../../utils/dateUtils";
+import { appointmentTypeNameById } from "../../utils/appointmentUtils";
+import { APPOINTMENT_TYPES } from "../../types/appointment";
+import { useAppointmentState } from "../../hooks/useAppointmentState";
 import WeeklyView from "./WeeklyView";
 import MonthlyView from "./MonthlyView";
 import AppointmentForm from "./AppointmentForm";
+import AppointmentHeader from "./AppointmentHeader";
+import AppointmentPopover from "./AppointmentPopover";
+import { AppointmentSchedulerProps } from "../../types/appointment";
 
 const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({ selectedCustomer }) => {
-  const [view, setView] = useState<"week" | "month">("week");
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: "1",
-      date: addDays(new Date(), 1),
-      time: "09:00",
-      name: "Nguyễn Văn A",
-      type: "personal_training",
-      status: "scheduled",
-    },
-    {
-      id: "2",
-      date: addDays(new Date(), 2),
-      time: "14:00",
-      name: "Trần Thị B",
-      type: "nutrition",
-      status: "scheduled",
-    },
-    {
-      id: "3",
-      date: addDays(new Date(), 3),
-      time: "17:00",
-      name: "Lê Văn C",
-      type: "group_class",
-      status: "completed",
-    },
-  ]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
-  const [newAppointment, setNewAppointment] = useState({
-    name: "",
-    type: "",
-    time: "",
-  });
+  const {
+    view,
+    setView,
+    currentDate,
+    setCurrentDate,
+    selectedDate,
+    appointments,
+    isDialogOpen,
+    setIsDialogOpen,
+    editingAppointment,
+    newAppointment,
+    setNewAppointment,
+    handlePrevious,
+    handleNext,
+    handleAddAppointment,
+    handleDeleteAppointment,
+    handleCompleteAppointment,
+    handleTimeSlotClick,
+    handleDayClick,
+    openEditDialog,
+  } = useAppointmentState(selectedCustomer);
 
   const daysToDisplay = getDaysToDisplay(view, currentDate);
 
-  const handlePrevious = () => {
-    setCurrentDate(navigatePrevious(currentDate, view));
-  };
+  // Render appointment for weekly view
+  const renderWeeklyAppointment = (day, appointment) => (
+    <AppointmentPopover
+      appointment={appointment}
+      appointmentTypeNameById={appointmentTypeNameById}
+      openEditDialog={openEditDialog}
+      handleCompleteAppointment={handleCompleteAppointment}
+    >
+      <div className="p-2 h-full flex flex-col cursor-pointer">
+        <div className="font-medium text-sm truncate">
+          {appointment.name}
+        </div>
+        <div className="text-xs text-gray-500 flex items-center mt-1">
+          <UserCheck className="h-3 w-3 mr-1" />
+          {appointmentTypeNameById(appointment.type)}
+        </div>
+        {appointment.status === "completed" && (
+          <div className="text-xs text-gray-500 flex items-center mt-1">
+            <Check className="h-3 w-3 mr-1" />
+            Đã hoàn thành
+          </div>
+        )}
+      </div>
+    </AppointmentPopover>
+  );
 
-  const handleNext = () => {
-    setCurrentDate(navigateNext(currentDate, view));
-  };
-
-  const handleAddAppointment = () => {
-    if (!newAppointment.name && !selectedCustomer) {
-      toast.error("Vui lòng điền tên khách hàng");
-      return;
-    }
-    
-    if (!newAppointment.type || !newAppointment.time) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
-      return;
-    }
-
-    if (editingAppointment) {
-      setAppointments(
-        appointments.map((app) =>
-          app.id === editingAppointment.id
-            ? {
-                ...app,
-                time: newAppointment.time,
-                name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
-                type: newAppointment.type,
-              }
-            : app
-        )
-      );
-      toast.success("Đã cập nhật lịch hẹn thành công");
-    } else {
-      const newApp: Appointment = {
-        id: Math.random().toString(36).substring(2, 9),
-        date: selectedDate,
-        time: newAppointment.time,
-        name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
-        type: newAppointment.type,
-        status: "scheduled",
-      };
-      setAppointments([...appointments, newApp]);
-      toast.success("Đã thêm lịch hẹn thành công");
-    }
-
-    setIsDialogOpen(false);
-    setEditingAppointment(null);
-    setNewAppointment({ name: "", type: "", time: "" });
-  };
-
-  const handleDeleteAppointment = (id: string) => {
-    setAppointments(appointments.filter((app) => app.id !== id));
-    toast.success("Đã xóa lịch hẹn thành công");
-    setIsDialogOpen(false);
-    setEditingAppointment(null);
-  };
-
-  const handleCompleteAppointment = (id: string) => {
-    setAppointments(
-      appointments.map((app) =>
-        app.id === id ? { ...app, status: "completed" } : app
-      )
-    );
-    toast.success("Đã đánh dấu hoàn thành lịch hẹn");
-  };
-
-  const handleTimeSlotClick = (day: Date, time: string) => {
-    setSelectedDate(day);
-    
-    const existingAppointment = appointments.find(
-      (app) => 
-        app.date.getDate() === day.getDate() &&
-        app.date.getMonth() === day.getMonth() &&
-        app.date.getFullYear() === day.getFullYear() &&
-        app.time === time
-    );
-
-    if (existingAppointment) {
-      // Không mở dialog chỉnh sửa ngay lập tức
-      // Hiện tại đã có Popover xử lý việc này
-    } else {
-      setEditingAppointment(null);
-      setNewAppointment({
-        name: selectedCustomer ? selectedCustomer.name : "",
-        type: "",
-        time: time,
-      });
-      setIsDialogOpen(true);
-    }
-  };
-
-  const handleDayClick = (day: Date) => {
-    setSelectedDate(day);
-    setNewAppointment({
-      name: selectedCustomer ? selectedCustomer.name : "",
-      type: "",
-      time: "",
-    });
-    setEditingAppointment(null);
-    setIsDialogOpen(true);
-  };
-
-  const openEditDialog = (appointment: Appointment) => {
-    setSelectedDate(appointment.date);
-    setEditingAppointment(appointment);
-    setNewAppointment({
-      name: appointment.name,
-      type: appointment.type,
-      time: appointment.time,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const appointmentTypeNameById = (id: string) => {
-    return APPOINTMENT_TYPES.find(type => type.id === id)?.name || id;
-  };
+  // Render appointment for monthly view
+  const renderMonthlyAppointment = (day, appointment) => (
+    <AppointmentPopover
+      appointment={appointment}
+      appointmentTypeNameById={appointmentTypeNameById}
+      openEditDialog={openEditDialog}
+      handleCompleteAppointment={handleCompleteAppointment}
+    >
+      <div
+        className={`text-xs p-1 mb-1 rounded truncate ${
+          appointment.status === "completed"
+            ? "bg-gray-200"
+            : "bg-primary/10 text-primary font-medium"
+        }`}
+      >
+        {appointment.time} - {appointment.name.split(" ")[0]}
+      </div>
+    </AppointmentPopover>
+  );
 
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
-            <CardTitle>Lịch hẹn</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Tabs value={view} onValueChange={(v) => setView(v as "week" | "month")}>
-                <TabsList>
-                  <TabsTrigger value="week">Tuần</TabsTrigger>
-                  <TabsTrigger value="month">Tháng</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Button size="icon" variant="outline" onClick={handlePrevious}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button size="icon" variant="outline" onClick={handleNext}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button size="sm" onClick={() => setCurrentDate(new Date())}>
-                Hôm nay
-              </Button>
-            </div>
-          </div>
-          <CardDescription>
-            {view === "week" 
-              ? `${formatDate(daysToDisplay[0], "dd/MM/yyyy")} - ${formatDate(daysToDisplay[daysToDisplay.length - 1], "dd/MM/yyyy")}` 
-              : formatDate(currentDate, "MMMM yyyy")}
-          </CardDescription>
-        </CardHeader>
+        <AppointmentHeader
+          view={view}
+          setView={setView}
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+          handlePrevious={handlePrevious}
+          handleNext={handleNext}
+          daysToDisplay={daysToDisplay}
+        />
         <CardContent>
           {view === "week" ? (
             <WeeklyView 
@@ -239,77 +110,7 @@ const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({ selectedCus
               appointments={appointments} 
               appointmentTypes={APPOINTMENT_TYPES}
               handleTimeSlotClick={handleTimeSlotClick}
-              renderAppointment={(day, appointment) => (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <div className="p-2 h-full flex flex-col cursor-pointer">
-                      <div className="font-medium text-sm truncate">
-                        {appointment.name}
-                      </div>
-                      <div className="text-xs text-gray-500 flex items-center mt-1">
-                        <UserCheck className="h-3 w-3 mr-1" />
-                        {appointmentTypeNameById(appointment.type)}
-                      </div>
-                      {appointment.status === "completed" && (
-                        <div className="text-xs text-gray-500 flex items-center mt-1">
-                          <Check className="h-3 w-3 mr-1" />
-                          Đã hoàn thành
-                        </div>
-                      )}
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 p-3">
-                    <h3 className="font-medium mb-2">Chi tiết lịch hẹn</h3>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-start">
-                        <UserCheck className="h-4 w-4 mt-0.5 mr-2 text-primary" />
-                        <div>
-                          <p className="font-medium">{appointment.name}</p>
-                          <p className="text-sm text-gray-500">{appointmentTypeNameById(appointment.type)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <CalendarIcon className="h-4 w-4 mr-2 text-primary" />
-                        <span className="text-sm">{formatDate(appointment.date, "EEEE, dd/MM/yyyy")}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-2 text-primary" />
-                        <span className="text-sm">{appointment.time}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <div className={`h-2 w-2 rounded-full mr-2 ${appointment.status === "completed" ? "bg-green-500" : appointment.status === "cancelled" ? "bg-red-500" : "bg-blue-500"}`}></div>
-                        <span className="text-sm">
-                          {appointment.status === "completed" 
-                            ? "Đã hoàn thành" 
-                            : appointment.status === "cancelled" 
-                              ? "Đã hủy" 
-                              : "Đã lên lịch"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => openEditDialog(appointment)}
-                      >
-                        <Edit className="h-3.5 w-3.5 mr-1" />
-                        Chỉnh sửa
-                      </Button>
-                      {appointment.status !== "completed" && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleCompleteAppointment(appointment.id)}
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" />
-                          Hoàn thành
-                        </Button>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
+              renderAppointment={renderWeeklyAppointment}
             />
           ) : (
             <MonthlyView 
@@ -317,71 +118,7 @@ const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({ selectedCus
               currentDate={currentDate} 
               appointments={appointments}
               handleDayClick={handleDayClick}
-              renderAppointment={(day, appointment) => (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <div
-                      className={`text-xs p-1 mb-1 rounded truncate ${
-                        appointment.status === "completed"
-                          ? "bg-gray-200"
-                          : "bg-primary/10 text-primary font-medium"
-                      }`}
-                    >
-                      {appointment.time} - {appointment.name.split(" ")[0]}
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 p-3">
-                    <h3 className="font-medium mb-2">Chi tiết lịch hẹn</h3>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-start">
-                        <UserCheck className="h-4 w-4 mt-0.5 mr-2 text-primary" />
-                        <div>
-                          <p className="font-medium">{appointment.name}</p>
-                          <p className="text-sm text-gray-500">{appointmentTypeNameById(appointment.type)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <CalendarIcon className="h-4 w-4 mr-2 text-primary" />
-                        <span className="text-sm">{formatDate(appointment.date, "EEEE, dd/MM/yyyy")}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-2 text-primary" />
-                        <span className="text-sm">{appointment.time}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <div className={`h-2 w-2 rounded-full mr-2 ${appointment.status === "completed" ? "bg-green-500" : appointment.status === "cancelled" ? "bg-red-500" : "bg-blue-500"}`}></div>
-                        <span className="text-sm">
-                          {appointment.status === "completed" 
-                            ? "Đã hoàn thành" 
-                            : appointment.status === "cancelled" 
-                              ? "Đã hủy" 
-                              : "Đã lên lịch"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => openEditDialog(appointment)}
-                      >
-                        <Edit className="h-3.5 w-3.5 mr-1" />
-                        Chỉnh sửa
-                      </Button>
-                      {appointment.status !== "completed" && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleCompleteAppointment(appointment.id)}
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" />
-                          Hoàn thành
-                        </Button>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
+              renderAppointment={renderMonthlyAppointment}
             />
           )}
         </CardContent>
