@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -31,6 +30,8 @@ import {
   Utensils, 
   Clock 
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Customer } from "../pages/CustomerPage";
 
 type PersonalInfo = {
   name: string;
@@ -46,6 +47,7 @@ type DietType = "normal" | "diet" | "special" | "";
 type PreferredTime = "morning" | "afternoon" | "evening" | "";
 
 const SurveyForm = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
     name: "",
@@ -87,17 +89,30 @@ const SurveyForm = () => {
     if (step < 5) {
       setStep(step + 1);
     } else {
-      // Submit the form
-      toast.success("Cảm ơn bạn đã hoàn thành khảo sát!");
-      console.log({
-        personalInfo,
+      const newCustomer: Customer = {
+        id: Math.random().toString(36).substring(2, 9),
+        name: personalInfo.name,
+        age: Number(personalInfo.age),
+        gender: personalInfo.gender,
+        height: Number(personalInfo.height),
+        weight: Number(personalInfo.weight),
         goal,
         activityLevel,
         dietType,
         dietDetails,
         preferredTime,
-      });
-      // Reset form after submission
+        createdAt: new Date().toISOString(),
+      };
+      
+      const storedCustomers = localStorage.getItem("customers");
+      const customers = storedCustomers ? JSON.parse(storedCustomers) : [];
+      
+      customers.push(newCustomer);
+      
+      localStorage.setItem("customers", JSON.stringify(customers));
+      
+      toast.success("Cảm ơn bạn đã hoàn thành khảo sát!");
+      
       setStep(1);
       setPersonalInfo({
         name: "",
@@ -111,6 +126,8 @@ const SurveyForm = () => {
       setDietType("");
       setDietDetails("");
       setPreferredTime("");
+      
+      navigate("/customers");
     }
   };
 
