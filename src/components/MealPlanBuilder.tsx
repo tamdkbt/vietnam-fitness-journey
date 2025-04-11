@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -57,7 +56,6 @@ import {
   ChevronRight 
 } from "lucide-react";
 
-// Define food item type
 type FoodItem = {
   id: string;
   name: string;
@@ -69,7 +67,6 @@ type FoodItem = {
   imageUrl?: string;
 };
 
-// Define meal type
 type Meal = {
   id: string;
   type: string; // breakfast, lunch, dinner, snack
@@ -82,7 +79,6 @@ type MealFood = {
   quantity: number;
 };
 
-// Food categories
 const FOOD_CATEGORIES = [
   { value: "protein", label: "Thực phẩm giàu Protein" },
   { value: "carbs", label: "Tinh bột - Carbs" },
@@ -93,7 +89,6 @@ const FOOD_CATEGORIES = [
   { value: "other", label: "Khác" },
 ];
 
-// Meal types
 const MEAL_TYPES = [
   { value: "breakfast", label: "Bữa sáng", icon: Coffee },
   { value: "lunch", label: "Bữa trưa", icon: Utensils },
@@ -101,7 +96,6 @@ const MEAL_TYPES = [
   { value: "snack", label: "Bữa phụ", icon: Apple },
 ];
 
-// Vietnamese foods database
 const FOODS: FoodItem[] = [
   // Protein
   {
@@ -291,7 +285,6 @@ const FOODS: FoodItem[] = [
   },
 ];
 
-// Days of the week
 const DAYS = [
   { value: "monday", label: "Thứ 2" },
   { value: "tuesday", label: "Thứ 3" },
@@ -302,7 +295,6 @@ const DAYS = [
   { value: "sunday", label: "CN" },
 ];
 
-// Sample meal plan
 const SAMPLE_MEALS: Meal[] = [
   {
     id: "meal1",
@@ -349,25 +341,22 @@ const SAMPLE_MEALS: Meal[] = [
 const MealPlanBuilder = () => {
   const [meals, setMeals] = useState<Meal[]>(SAMPLE_MEALS);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredCategory, setFilteredCategory] = useState<string>("");
+  const [filteredCategory, setFilteredCategory] = useState<string>("all");
   const [selectedDay, setSelectedDay] = useState<string>("monday");
   const [showAddMealDialog, setShowAddMealDialog] = useState(false);
   const [mealType, setMealType] = useState<string>("");
   const [selectedFoods, setSelectedFoods] = useState<Array<{ foodId: string; quantity: number }>>([]);
   const [weekStartDate, setWeekStartDate] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
 
-  // Filter foods based on search term and category
   const filteredFoods = FOODS.filter((food) => {
     const matchesSearch = food.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filteredCategory ? food.category === filteredCategory : true;
+    const matchesCategory = filteredCategory === "all" ? true : food.category === filteredCategory;
     
     return matchesSearch && matchesCategory;
   });
 
-  // Get meals for the selected day
   const mealsForDay = meals.filter((meal) => meal.day === selectedDay);
 
-  // Calculate nutrition totals for a meal
   const calculateMealNutrition = (meal: Meal) => {
     let calories = 0;
     let protein = 0;
@@ -377,7 +366,7 @@ const MealPlanBuilder = () => {
     meal.foods.forEach((mealFood) => {
       const food = FOODS.find((f) => f.id === mealFood.foodId);
       if (food) {
-        const multiplier = mealFood.quantity / 100; // Assuming nutrition values are per 100g
+        const multiplier = mealFood.quantity / 100;
         calories += food.calories * multiplier;
         protein += food.protein * multiplier;
         carbs += food.carbs * multiplier;
@@ -388,7 +377,6 @@ const MealPlanBuilder = () => {
     return { calories, protein, carbs, fat };
   };
 
-  // Calculate daily nutrition totals
   const calculateDailyNutrition = (day: string) => {
     const dayMeals = meals.filter((meal) => meal.day === day);
     let calories = 0;
@@ -407,7 +395,6 @@ const MealPlanBuilder = () => {
     return { calories, protein, carbs, fat };
   };
 
-  // Handle adding a new meal
   const handleAddMeal = () => {
     if (!mealType) {
       toast.error("Vui lòng chọn loại bữa ăn");
@@ -419,13 +406,11 @@ const MealPlanBuilder = () => {
       return;
     }
 
-    // Check if this meal type already exists for this day
     const existingMeal = meals.find(
       (meal) => meal.day === selectedDay && meal.type === mealType
     );
 
     if (existingMeal) {
-      // Update existing meal
       const updatedMeals = meals.map((meal) =>
         meal.id === existingMeal.id
           ? { ...meal, foods: selectedFoods }
@@ -434,7 +419,6 @@ const MealPlanBuilder = () => {
       setMeals(updatedMeals);
       toast.success("Đã cập nhật bữa ăn");
     } else {
-      // Create new meal
       const newMeal: Meal = {
         id: `meal-${Date.now()}`,
         type: mealType,
@@ -445,28 +429,23 @@ const MealPlanBuilder = () => {
       toast.success("Đã thêm bữa ăn mới");
     }
 
-    // Reset form
     setShowAddMealDialog(false);
     setMealType("");
     setSelectedFoods([]);
   };
 
-  // Handle selecting a food item
   const handleSelectFood = (foodId: string) => {
     const existingFoodIndex = selectedFoods.findIndex(f => f.foodId === foodId);
     
     if (existingFoodIndex >= 0) {
-      // Remove if already selected
       const newSelectedFoods = [...selectedFoods];
       newSelectedFoods.splice(existingFoodIndex, 1);
       setSelectedFoods(newSelectedFoods);
     } else {
-      // Add new food with default quantity
       setSelectedFoods([...selectedFoods, { foodId, quantity: 100 }]);
     }
   };
 
-  // Handle changing food quantity
   const handleFoodQuantityChange = (foodId: string, quantity: number) => {
     setSelectedFoods(
       selectedFoods.map((food) =>
@@ -475,46 +454,38 @@ const MealPlanBuilder = () => {
     );
   };
 
-  // Get a food item by ID
   const getFoodById = (foodId: string): FoodItem | undefined => {
     return FOODS.find((food) => food.id === foodId);
   };
 
-  // Handle editing a meal
   const handleEditMeal = (meal: Meal) => {
     setMealType(meal.type);
     setSelectedFoods(meal.foods);
     setShowAddMealDialog(true);
   };
 
-  // Handle deleting a meal
   const handleDeleteMeal = (mealId: string) => {
     setMeals(meals.filter((meal) => meal.id !== mealId));
     toast.success("Đã xóa bữa ăn");
   };
 
-  // Generate PDF for meal plan
   const handleDownloadPDF = () => {
     toast.success("Đã xuất kế hoạch ăn uống thành công");
   };
 
-  // Navigate to previous week
   const handlePreviousWeek = () => {
     setWeekStartDate(addDays(weekStartDate, -7));
   };
 
-  // Navigate to next week
   const handleNextWeek = () => {
     setWeekStartDate(addDays(weekStartDate, 7));
   };
 
-  // Format the current week display
   const formatWeekDisplay = () => {
     const weekEnd = addDays(weekStartDate, 6);
     return `${format(weekStartDate, "dd/MM")} - ${format(weekEnd, "dd/MM")}`;
   };
 
-  // Meal icon component
   const MealIcon = ({ type }: { type: string }) => {
     const mealType = MEAL_TYPES.find((t) => t.value === type);
     
@@ -524,12 +495,10 @@ const MealPlanBuilder = () => {
     return <Icon className="h-5 w-5" />;
   };
 
-  // Get category label for a food item
   const getCategoryLabel = (categoryValue: string): string => {
     return FOOD_CATEGORIES.find((c) => c.value === categoryValue)?.label || categoryValue;
   };
 
-  // Get meal type label
   const getMealTypeLabel = (typeValue: string): string => {
     return MEAL_TYPES.find((t) => t.value === typeValue)?.label || typeValue;
   };
@@ -807,7 +776,7 @@ const MealPlanBuilder = () => {
                           <SelectValue placeholder="Tất cả loại" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Tất cả loại</SelectItem>
+                          <SelectItem value="all">Tất cả loại</SelectItem>
                           {FOOD_CATEGORIES.map((category) => (
                             <SelectItem key={category.value} value={category.value}>
                               {category.label}
