@@ -3,7 +3,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { User, Check } from "lucide-react";
 import { Appointment, HOURS, AppointmentType } from "../../types/appointment";
-import { checkIsToday, formatDate, getAppointmentsForDay } from "../../utils/dateUtils";
+import { checkIsToday, formatDate } from "../../utils/dateUtils";
 
 interface WeeklyViewProps {
   daysToDisplay: Date[];

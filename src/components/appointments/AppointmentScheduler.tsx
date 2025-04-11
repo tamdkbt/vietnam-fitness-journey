@@ -19,21 +19,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
-  Plus
 } from "lucide-react";
 import { toast } from "sonner";
 import { addDays } from "date-fns";
-import { APPOINTMENT_TYPES, HOURS, Appointment } from "../../types/appointment";
-import { getDaysToDisplay, formatDate, navigateNext, navigatePrevious } from "../../utils/dateUtils";
+import { APPOINTMENT_TYPES, HOURS, Appointment, AppointmentSchedulerProps } from "../../types/appointment";
+import { 
+  getDaysToDisplay, 
+  formatDate, 
+  navigateNext, 
+  navigatePrevious 
+} from "../../utils/dateUtils";
 import WeeklyView from "./WeeklyView";
 import MonthlyView from "./MonthlyView";
 import AppointmentForm from "./AppointmentForm";
-import { Customer } from "../../pages/CustomerPage";
-
-interface AppointmentSchedulerProps {
-  selectedCustomer?: Customer | null;
-}
 
 const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({ selectedCustomer }) => {
   const [view, setView] = useState<"week" | "month">("week");
