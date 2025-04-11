@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -55,7 +54,6 @@ import {
   ChevronDown
 } from "lucide-react";
 
-// Define exercise type
 type Exercise = {
   id: string;
   name: string;
@@ -68,7 +66,6 @@ type Exercise = {
   restTime?: number;
 };
 
-// Define workout type
 type Workout = {
   id: string;
   name: string;
@@ -83,7 +80,6 @@ type WorkoutExercise = {
   restTime: number;
 };
 
-// Sample exercise data
 const EXERCISES: Exercise[] = [
   {
     id: "ex1",
@@ -151,7 +147,6 @@ const EXERCISES: Exercise[] = [
   },
 ];
 
-// Sample workout routine
 const SAMPLE_WORKOUT: Workout[] = [
   {
     id: "w1",
@@ -183,7 +178,6 @@ const SAMPLE_WORKOUT: Workout[] = [
   },
 ];
 
-// Days of the week
 const DAYS = [
   { value: "monday", label: "Thứ Hai" },
   { value: "tuesday", label: "Thứ Ba" },
@@ -194,7 +188,6 @@ const DAYS = [
   { value: "sunday", label: "Chủ Nhật" },
 ];
 
-// Muscle groups
 const MUSCLE_GROUPS = [
   { value: "abs", label: "Bụng" },
   { value: "chest", label: "Ngực" },
@@ -207,7 +200,6 @@ const MUSCLE_GROUPS = [
   { value: "full_body", label: "Toàn thân" },
 ];
 
-// Difficulty levels
 const DIFFICULTY_LEVELS = [
   { value: "beginner", label: "Người mới" },
   { value: "intermediate", label: "Trung bình" },
@@ -229,7 +221,6 @@ const WorkoutPlanBuilder = () => {
   const [exerciseRestTime, setExerciseRestTime] = useState<number>(60);
   const [newWorkoutName, setNewWorkoutName] = useState<string>("");
 
-  // Filter exercises based on search term and filters
   const filteredExercises = EXERCISES.filter((exercise) => {
     const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          exercise.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -239,10 +230,8 @@ const WorkoutPlanBuilder = () => {
     return matchesSearch && matchesMuscle && matchesDifficulty;
   });
 
-  // Get current workout for selected day
   const currentWorkout = workouts.find((workout) => workout.day === selectedDay);
 
-  // Add exercise to workout
   const addExerciseToWorkout = () => {
     if (!selectedExerciseId) {
       toast.error("Vui lòng chọn bài tập");
@@ -250,7 +239,6 @@ const WorkoutPlanBuilder = () => {
     }
 
     if (!currentEditingWorkout) {
-      // Create a new workout
       if (!newWorkoutName) {
         toast.error("Vui lòng đặt tên cho buổi tập");
         return;
@@ -273,7 +261,6 @@ const WorkoutPlanBuilder = () => {
       setWorkouts([...workouts, newWorkout]);
       toast.success("Đã tạo buổi tập mới");
     } else {
-      // Add to existing workout
       const existingExercise = currentEditingWorkout.exercises.find(
         (ex) => ex.exerciseId === selectedExerciseId
       );
@@ -307,7 +294,6 @@ const WorkoutPlanBuilder = () => {
     resetExerciseForm();
   };
 
-  // Reset exercise form
   const resetExerciseForm = () => {
     setSelectedExerciseId("");
     setExerciseSets(3);
@@ -317,18 +303,15 @@ const WorkoutPlanBuilder = () => {
     setNewWorkoutName("");
   };
 
-  // Remove exercise from workout
   const removeExerciseFromWorkout = (workoutId: string, exerciseId: string) => {
     const workout = workouts.find((w) => w.id === workoutId);
     
     if (!workout) return;
     
     if (workout.exercises.length === 1) {
-      // If this is the last exercise, remove the whole workout
       setWorkouts(workouts.filter((w) => w.id !== workoutId));
       toast.success("Đã xóa buổi tập");
     } else {
-      // Otherwise just remove the exercise
       const updatedWorkout = {
         ...workout,
         exercises: workout.exercises.filter((ex) => ex.exerciseId !== exerciseId),
@@ -341,34 +324,28 @@ const WorkoutPlanBuilder = () => {
     }
   };
 
-  // Generate PDF
   const handleDownloadPDF = () => {
     toast.success("Đã xuất lịch tập thành công");
   };
 
-  // Get details of an exercise by ID
   const getExerciseById = (id: string): Exercise | undefined => {
     return EXERCISES.find((ex) => ex.id === id);
   };
 
-  // Get day label by value
   const getDayLabel = (value: string): string => {
     return DAYS.find((day) => day.value === value)?.label || value;
   };
 
-  // Calculate workout duration
   const calculateWorkoutDuration = (workout: Workout): number => {
     return workout.exercises.reduce((total, exercise) => {
       const exerciseDetails = getExerciseById(exercise.exerciseId);
       if (!exerciseDetails) return total;
       
-      // Time for all sets including rest time
       return total + (exerciseDetails.duration * exercise.sets) + 
                      (exercise.restTime * (exercise.sets - 1));
     }, 0);
   };
 
-  // Start editing a workout
   const startEditingWorkout = (workout: Workout) => {
     setCurrentEditingWorkout(workout);
     setActiveTab("exercises");
@@ -538,7 +515,7 @@ const WorkoutPlanBuilder = () => {
                         <SelectValue placeholder="Tất cả nhóm cơ" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tất cả nhóm cơ</SelectItem>
+                        <SelectItem value="all">Tất cả nhóm cơ</SelectItem>
                         {MUSCLE_GROUPS.map((muscle) => (
                           <SelectItem key={muscle.value} value={muscle.value}>
                             {muscle.label}
@@ -555,7 +532,7 @@ const WorkoutPlanBuilder = () => {
                         <SelectValue placeholder="Tất cả độ khó" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tất cả độ khó</SelectItem>
+                        <SelectItem value="all">Tất cả độ khó</SelectItem>
                         {DIFFICULTY_LEVELS.map((level) => (
                           <SelectItem key={level.value} value={level.value}>
                             {level.label}
@@ -567,8 +544,8 @@ const WorkoutPlanBuilder = () => {
                   
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => {
-                    setFilteredMuscle("");
-                    setFilteredDifficulty("");
+                    setFilteredMuscle("all");
+                    setFilteredDifficulty("all");
                   }}>
                     Xóa bộ lọc
                   </DropdownMenuItem>
