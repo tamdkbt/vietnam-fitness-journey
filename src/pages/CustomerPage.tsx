@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +17,26 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Search, MoreHorizontal, Calendar, Dumbbell, Utensils } from "lucide-react";
 import { toast } from "sonner";
 
+// Define MedicalHistory type
+export type MedicalHistory = {
+  hasHeartIssues: boolean;
+  hasDiabetes: boolean;
+  hasAsthma: boolean;
+  hasArthritis: boolean;
+  hasHighBloodPressure: boolean;
+  otherConditions: string;
+};
+
+// Define Allergies type
+export type Allergies = {
+  hasFoodAllergies: boolean;
+  foodAllergies: string;
+  hasMedicationAllergies: boolean;
+  medicationAllergies: string;
+  hasEnvironmentalAllergies: boolean;
+  environmentalAllergies: string;
+};
+
 // Định nghĩa kiểu dữ liệu cho khách hàng
 export type Customer = {
   id: string;
@@ -32,6 +51,8 @@ export type Customer = {
   dietDetails?: string;
   preferredTime: string;
   createdAt: string;
+  medicalHistory: MedicalHistory;
+  allergies: Allergies;
 };
 
 const CustomerPage = () => {
