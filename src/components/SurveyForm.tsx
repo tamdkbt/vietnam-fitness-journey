@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Select, 
   SelectContent, 
@@ -28,7 +29,10 @@ import {
   Target, 
   Activity, 
   Utensils, 
-  Clock 
+  Clock,
+  Heart,
+  Pill,
+  AlertTriangle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer } from "../pages/CustomerPage";
@@ -46,6 +50,24 @@ type ActivityLevel = "sedentary" | "moderate" | "active" | "very-active" | "";
 type DietType = "normal" | "diet" | "special" | "";
 type PreferredTime = "morning" | "afternoon" | "evening" | "";
 
+type MedicalHistory = {
+  hasHeartIssues: boolean;
+  hasDiabetes: boolean;
+  hasAsthma: boolean;
+  hasArthritis: boolean;
+  hasHighBloodPressure: boolean;
+  otherConditions: string;
+};
+
+type Allergies = {
+  hasFoodAllergies: boolean;
+  foodAllergies: string;
+  hasMedicationAllergies: boolean;
+  medicationAllergies: string;
+  hasEnvironmentalAllergies: boolean;
+  environmentalAllergies: string;
+};
+
 const SurveyForm = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -61,6 +83,22 @@ const SurveyForm = () => {
   const [dietType, setDietType] = useState<DietType>("");
   const [dietDetails, setDietDetails] = useState("");
   const [preferredTime, setPreferredTime] = useState<PreferredTime>("");
+  const [medicalHistory, setMedicalHistory] = useState<MedicalHistory>({
+    hasHeartIssues: false,
+    hasDiabetes: false,
+    hasAsthma: false,
+    hasArthritis: false,
+    hasHighBloodPressure: false,
+    otherConditions: "",
+  });
+  const [allergies, setAllergies] = useState<Allergies>({
+    hasFoodAllergies: false,
+    foodAllergies: "",
+    hasMedicationAllergies: false,
+    medicationAllergies: "",
+    hasEnvironmentalAllergies: false,
+    environmentalAllergies: "",
+  });
 
   const nextStep = () => {
     if (step === 1) {
@@ -86,7 +124,7 @@ const SurveyForm = () => {
       return;
     }
 
-    if (step < 5) {
+    if (step < 6) {
       setStep(step + 1);
     } else {
       const newCustomer: Customer = {
@@ -101,6 +139,8 @@ const SurveyForm = () => {
         dietType,
         dietDetails,
         preferredTime,
+        medicalHistory,
+        allergies,
         createdAt: new Date().toISOString(),
       };
       
@@ -126,6 +166,22 @@ const SurveyForm = () => {
       setDietType("");
       setDietDetails("");
       setPreferredTime("");
+      setMedicalHistory({
+        hasHeartIssues: false,
+        hasDiabetes: false,
+        hasAsthma: false,
+        hasArthritis: false,
+        hasHighBloodPressure: false,
+        otherConditions: "",
+      });
+      setAllergies({
+        hasFoodAllergies: false,
+        foodAllergies: "",
+        hasMedicationAllergies: false,
+        medicationAllergies: "",
+        hasEnvironmentalAllergies: false,
+        environmentalAllergies: "",
+      });
       
       navigate("/customers");
     }
@@ -140,6 +196,14 @@ const SurveyForm = () => {
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPersonalInfo({ ...personalInfo, [name]: value });
+  };
+
+  const handleMedicalHistoryChange = (condition: keyof MedicalHistory, value: boolean | string) => {
+    setMedicalHistory({ ...medicalHistory, [condition]: value });
+  };
+
+  const handleAllergiesChange = (allergyType: keyof Allergies, value: boolean | string) => {
+    setAllergies({ ...allergies, [allergyType]: value });
   };
 
   const renderStepContent = () => {
@@ -404,6 +468,183 @@ const SurveyForm = () => {
             </CardContent>
           </div>
         );
+      case 6:
+        return (
+          <div className="space-y-4 animate-fade-in">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Heart className="h-5 w-5 text-primary" />
+                Tiểu sử bệnh và dị ứng
+              </CardTitle>
+              <CardDescription>
+                Thông tin này giúp chúng tôi điều chỉnh kế hoạch tập luyện an toàn và hiệu quả cho bạn
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4 bg-soft-purple/10 p-4 rounded-lg border border-primary/20">
+                  <h3 className="font-medium text-lg flex items-center gap-2 text-primary">
+                    <Heart className="w-5 h-5" />
+                    Tiểu sử bệnh
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="heart-issues" 
+                        checked={medicalHistory.hasHeartIssues}
+                        onCheckedChange={(checked) => 
+                          handleMedicalHistoryChange("hasHeartIssues", Boolean(checked))
+                        }
+                      />
+                      <Label htmlFor="heart-issues" className="cursor-pointer">Vấn đề tim mạch</Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="diabetes" 
+                        checked={medicalHistory.hasDiabetes}
+                        onCheckedChange={(checked) => 
+                          handleMedicalHistoryChange("hasDiabetes", Boolean(checked))
+                        }
+                      />
+                      <Label htmlFor="diabetes" className="cursor-pointer">Tiểu đường</Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="asthma" 
+                        checked={medicalHistory.hasAsthma}
+                        onCheckedChange={(checked) => 
+                          handleMedicalHistoryChange("hasAsthma", Boolean(checked))
+                        }
+                      />
+                      <Label htmlFor="asthma" className="cursor-pointer">Hen suyễn</Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="arthritis" 
+                        checked={medicalHistory.hasArthritis}
+                        onCheckedChange={(checked) => 
+                          handleMedicalHistoryChange("hasArthritis", Boolean(checked))
+                        }
+                      />
+                      <Label htmlFor="arthritis" className="cursor-pointer">Viêm khớp</Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="high-blood-pressure" 
+                        checked={medicalHistory.hasHighBloodPressure}
+                        onCheckedChange={(checked) => 
+                          handleMedicalHistoryChange("hasHighBloodPressure", Boolean(checked))
+                        }
+                      />
+                      <Label htmlFor="high-blood-pressure" className="cursor-pointer">Huyết áp cao</Label>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <Label htmlFor="other-conditions">Tình trạng khác (nếu có)</Label>
+                    <Textarea
+                      id="other-conditions"
+                      placeholder="Mô tả các vấn đề sức khỏe khác mà bạn đang gặp phải"
+                      value={medicalHistory.otherConditions}
+                      onChange={(e) => handleMedicalHistoryChange("otherConditions", e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 bg-accent/50 p-4 rounded-lg border border-secondary/20">
+                  <h3 className="font-medium text-lg flex items-center gap-2 text-secondary">
+                    <AlertTriangle className="w-5 h-5" />
+                    Dị ứng
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Checkbox 
+                          id="food-allergies" 
+                          checked={allergies.hasFoodAllergies}
+                          onCheckedChange={(checked) => 
+                            handleAllergiesChange("hasFoodAllergies", Boolean(checked))
+                          }
+                        />
+                        <Label htmlFor="food-allergies" className="font-medium cursor-pointer">Dị ứng thực phẩm</Label>
+                      </div>
+                      
+                      {allergies.hasFoodAllergies && (
+                        <Input
+                          id="food-allergies-details"
+                          placeholder="Ví dụ: hải sản, lạc, đậu nành..."
+                          value={allergies.foodAllergies}
+                          onChange={(e) => handleAllergiesChange("foodAllergies", e.target.value)}
+                          className="mt-1"
+                        />
+                      )}
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Checkbox 
+                          id="medication-allergies" 
+                          checked={allergies.hasMedicationAllergies}
+                          onCheckedChange={(checked) => 
+                            handleAllergiesChange("hasMedicationAllergies", Boolean(checked))
+                          }
+                        />
+                        <Label htmlFor="medication-allergies" className="font-medium cursor-pointer">Dị ứng thuốc</Label>
+                      </div>
+                      
+                      {allergies.hasMedicationAllergies && (
+                        <Input
+                          id="medication-allergies-details"
+                          placeholder="Ví dụ: penicillin, aspirin..."
+                          value={allergies.medicationAllergies}
+                          onChange={(e) => handleAllergiesChange("medicationAllergies", e.target.value)}
+                          className="mt-1"
+                        />
+                      )}
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Checkbox 
+                          id="environmental-allergies" 
+                          checked={allergies.hasEnvironmentalAllergies}
+                          onCheckedChange={(checked) => 
+                            handleAllergiesChange("hasEnvironmentalAllergies", Boolean(checked))
+                          }
+                        />
+                        <Label htmlFor="environmental-allergies" className="font-medium cursor-pointer">Dị ứng môi trường</Label>
+                      </div>
+                      
+                      {allergies.hasEnvironmentalAllergies && (
+                        <Input
+                          id="environmental-allergies-details"
+                          placeholder="Ví dụ: phấn hoa, lông thú cưng, bụi..."
+                          value={allergies.environmentalAllergies}
+                          onChange={(e) => handleAllergiesChange("environmentalAllergies", e.target.value)}
+                          className="mt-1"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/70 p-3 rounded-lg mt-4 border border-secondary/10">
+                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                      <Pill className="h-4 w-4 text-secondary" />
+                      Thông tin này giúp chúng tôi điều chỉnh chế độ dinh dưỡng phù hợp với bạn
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </div>
+        );
       default:
         return null;
     }
@@ -414,11 +655,11 @@ const SurveyForm = () => {
       <Card className="border-t-4 border-t-primary">
         <div className="px-4 pt-4">
           <div className="flex justify-between mb-2">
-            {[1, 2, 3, 4, 5].map((item) => (
+            {[1, 2, 3, 4, 5, 6].map((item) => (
               <div
                 key={item}
-                className={`w-1/5 px-1 ${
-                  item !== 5 ? "flex items-center" : ""
+                className={`w-1/6 px-1 ${
+                  item !== 6 ? "flex items-center" : ""
                 }`}
               >
                 <div
@@ -437,6 +678,7 @@ const SurveyForm = () => {
             <span className={step >= 3 ? "text-primary font-medium" : ""}>Vận động</span>
             <span className={step >= 4 ? "text-primary font-medium" : ""}>Dinh dưỡng</span>
             <span className={step >= 5 ? "text-primary font-medium" : ""}>Lịch trình</span>
+            <span className={step >= 6 ? "text-primary font-medium" : ""}>Sức khỏe</span>
           </div>
         </div>
         
@@ -452,7 +694,7 @@ const SurveyForm = () => {
             <div></div>
           )}
           <Button onClick={nextStep}>
-            {step === 5 ? (
+            {step === 6 ? (
               <>
                 Hoàn thành
                 <Check className="h-4 w-4 ml-2" />
