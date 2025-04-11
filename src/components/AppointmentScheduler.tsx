@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -42,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format, addDays, addMonths, startOfWeek, startOfMonth, endOfWeek, endOfMonth, eachDayOfInterval, getDay, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
+import { Customer } from "../pages/CustomerPage";
 
 type Appointment = {
   id: string;
@@ -65,7 +65,11 @@ const APPOINTMENT_TYPES = [
   { id: "group_class", name: "Lớp học nhóm" }
 ];
 
-const AppointmentScheduler = () => {
+interface AppointmentSchedulerProps {
+  selectedCustomer?: Customer | null;
+}
+
+const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({ selectedCustomer }) => {
   const [view, setView] = useState<"week" | "month">("week");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -151,7 +155,6 @@ const AppointmentScheduler = () => {
     }
 
     if (editingAppointment) {
-      // Update existing appointment
       setAppointments(
         appointments.map((app) =>
           app.id === editingAppointment.id
@@ -166,7 +169,6 @@ const AppointmentScheduler = () => {
       );
       toast.success("Đã cập nhật lịch hẹn thành công");
     } else {
-      // Add new appointment
       const newApp: Appointment = {
         id: Math.random().toString(36).substring(2, 9),
         date: selectedDate,
@@ -203,7 +205,6 @@ const AppointmentScheduler = () => {
   const handleTimeSlotClick = (day: Date, time: string) => {
     setSelectedDate(day);
     
-    // Check if there's already an appointment at this time
     const existingAppointment = appointments.find(
       (app) => 
         app.date.getDate() === day.getDate() &&
@@ -222,7 +223,7 @@ const AppointmentScheduler = () => {
     } else {
       setEditingAppointment(null);
       setNewAppointment({
-        name: "",
+        name: selectedCustomer ? selectedCustomer.name : "",
         type: "",
         time: time,
       });
@@ -245,16 +246,13 @@ const AppointmentScheduler = () => {
   };
 
   const renderMonthlyView = () => {
-    // Calculate day name headers (Mo, Tu, We, ...)
     const dayNames = Array.from({ length: 7 }, (_, i) => 
       format(new Date(2021, 0, i + 1), 'EEEEEE', { locale: vi })
     );
     
-    // Create calendar grid
     const firstDayOfMonth = startOfMonth(currentDate);
     const startDay = getDay(firstDayOfMonth);
     
-    // Adjust for week starting on Monday (0 = Monday in our case)
     const adjustedStartDay = startDay === 0 ? 6 : startDay - 1;
     
     const daysInMonth = daysToDisplay.length;
@@ -263,14 +261,13 @@ const AppointmentScheduler = () => {
     const calendarCells = Array.from({ length: totalCells }, (_, i) => {
       const dayIndex = i - adjustedStartDay;
       if (dayIndex < 0 || dayIndex >= daysInMonth) {
-        return null; // Empty cell
+        return null;
       }
       return daysToDisplay[dayIndex];
     });
     
     return (
       <div className="w-full">
-        {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {dayNames.map((day, i) => (
             <div key={i} className="text-center py-1 text-sm font-medium">
@@ -279,7 +276,6 @@ const AppointmentScheduler = () => {
           ))}
         </div>
         
-        {/* Calendar grid */}
         <div className="grid grid-cols-7 gap-1">
           {calendarCells.map((day, i) => {
             if (!day) {
@@ -347,9 +343,8 @@ const AppointmentScheduler = () => {
     return (
       <div className="overflow-x-auto">
         <div className="grid grid-cols-8 gap-4 min-w-[800px]">
-          {/* Time column */}
           <div className="col-span-1">
-            <div className="h-12"></div> {/* Empty header cell */}
+            <div className="h-12"></div>
             {HOURS.map((hour) => (
               <div key={hour} className="h-16 flex items-center justify-center text-sm text-gray-500">
                 {hour}
@@ -357,7 +352,6 @@ const AppointmentScheduler = () => {
             ))}
           </div>
           
-          {/* Days columns */}
           {daysToDisplay.map((day, index) => (
             <div key={index} className="col-span-1">
               <div 
@@ -496,14 +490,23 @@ const AppointmentScheduler = () => {
               <Label htmlFor="name" className="text-right">
                 Tên khách hàng
               </Label>
-              <Input
-                id="name"
-                value={newAppointment.name}
-                onChange={(e) =>
-                  setNewAppointment({ ...newAppointment, name: e.target.value })
-                }
-                className="col-span-3"
-              />
+              {selectedCustomer ? (
+                <Input
+                  id="name"
+                  value={selectedCustomer.name}
+                  className="col-span-3 bg-gray-50"
+                  readOnly
+                />
+              ) : (
+                <Input
+                  id="name"
+                  value={newAppointment.name}
+                  onChange={(e) =>
+                    setNewAppointment({ ...newAppointment, name: e.target.value })
+                  }
+                  className="col-span-3"
+                />
+              )}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="type" className="text-right">

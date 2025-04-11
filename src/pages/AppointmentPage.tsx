@@ -72,8 +72,8 @@ const AppointmentPage = () => {
           </Alert>
         )}
         
-        {/* Passing the selectedCustomer as a key to force re-render when customer changes */}
-        <AppointmentScheduler key={selectedCustomer?.id} />
+        {/* Passing the selectedCustomer as a prop and a key to force re-render when customer changes */}
+        <AppointmentScheduler key={selectedCustomer?.id} selectedCustomer={selectedCustomer} />
       </div>
     </Layout>
   );
