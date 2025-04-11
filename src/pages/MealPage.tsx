@@ -72,7 +72,8 @@ const MealPage = () => {
           </Alert>
         )}
         
-        <MealPlanBuilder selectedCustomer={selectedCustomer} />
+        {/* Passing the selectedCustomer as a key to force re-render when customer changes */}
+        <MealPlanBuilder key={selectedCustomer?.id} />
       </div>
     </Layout>
   );

@@ -72,7 +72,8 @@ const WorkoutPage = () => {
           </Alert>
         )}
         
-        <WorkoutPlanBuilder selectedCustomer={selectedCustomer} />
+        {/* Passing the selectedCustomer as a key to force re-render when customer changes */}
+        <WorkoutPlanBuilder key={selectedCustomer?.id} />
       </div>
     </Layout>
   );
