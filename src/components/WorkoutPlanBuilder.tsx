@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Card, 
@@ -31,10 +32,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { 
   Download, 
@@ -51,8 +73,13 @@ import {
   DumbbellIcon,
   Edit,
   ArrowRight,
-  ChevronDown
+  ChevronDown,
+  Info,
+  X,
+  Save,
+  Check
 } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 type Exercise = {
   id: string;
@@ -220,6 +247,10 @@ const WorkoutPlanBuilder = () => {
   const [exerciseReps, setExerciseReps] = useState<number>(10);
   const [exerciseRestTime, setExerciseRestTime] = useState<number>(60);
   const [newWorkoutName, setNewWorkoutName] = useState<string>("");
+  const [editingExercise, setEditingExercise] = useState<{workoutId: string, exerciseId: string} | null>(null);
+  const [showDeleteExerciseDialog, setShowDeleteExerciseDialog] = useState<{workoutId: string, exerciseId: string} | null>(null);
+  const [showDeleteWorkoutDialog, setShowDeleteWorkoutDialog] = useState<string | null>(null);
+  const [exerciseDetailModal, setExerciseDetailModal] = useState<Exercise | null>(null);
 
   const filteredExercises = EXERCISES.filter((exercise) => {
     const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -259,7 +290,7 @@ const WorkoutPlanBuilder = () => {
       };
 
       setWorkouts([...workouts, newWorkout]);
-      toast.success("Đã tạo buổi tập mới");
+      toast.success("Đã tạo buổi tập mới thành công");
     } else {
       const existingExercise = currentEditingWorkout.exercises.find(
         (ex) => ex.exerciseId === selectedExerciseId
@@ -288,10 +319,45 @@ const WorkoutPlanBuilder = () => {
           w.id === currentEditingWorkout.id ? updatedWorkout : w
         )
       );
-      toast.success("Đã thêm bài tập vào buổi tập");
+      toast.success("Đã thêm bài tập vào buổi tập thành công");
     }
 
     resetExerciseForm();
+  };
+
+  const updateExerciseInWorkout = () => {
+    if (!editingExercise) return;
+    
+    const { workoutId, exerciseId } = editingExercise;
+    const workout = workouts.find((w) => w.id === workoutId);
+    
+    if (!workout) return;
+    
+    const updatedExercises = workout.exercises.map(ex => 
+      ex.exerciseId === exerciseId 
+        ? { ...ex, sets: exerciseSets, reps: exerciseReps, restTime: exerciseRestTime }
+        : ex
+    );
+    
+    const updatedWorkout = { ...workout, exercises: updatedExercises };
+    
+    setWorkouts(workouts.map(w => w.id === workoutId ? updatedWorkout : w));
+    setEditingExercise(null);
+    resetExerciseForm();
+    toast.success("Đã cập nhật bài tập thành công");
+  };
+
+  const startEditingExercise = (workoutId: string, exercise: WorkoutExercise) => {
+    const workout = workouts.find(w => w.id === workoutId);
+    if (!workout) return;
+    
+    setEditingExercise({ workoutId, exerciseId: exercise.exerciseId });
+    setSelectedExerciseId(exercise.exerciseId);
+    setExerciseSets(exercise.sets);
+    setExerciseReps(exercise.reps);
+    setExerciseRestTime(exercise.restTime);
+    setShowAddExerciseForm(true);
+    setActiveTab("exercises");
   };
 
   const resetExerciseForm = () => {
@@ -301,6 +367,7 @@ const WorkoutPlanBuilder = () => {
     setExerciseRestTime(60);
     setShowAddExerciseForm(false);
     setNewWorkoutName("");
+    setEditingExercise(null);
   };
 
   const removeExerciseFromWorkout = (workoutId: string, exerciseId: string) => {
@@ -310,7 +377,7 @@ const WorkoutPlanBuilder = () => {
     
     if (workout.exercises.length === 1) {
       setWorkouts(workouts.filter((w) => w.id !== workoutId));
-      toast.success("Đã xóa buổi tập");
+      toast.success("Đã xóa buổi tập thành công");
     } else {
       const updatedWorkout = {
         ...workout,
@@ -320,8 +387,15 @@ const WorkoutPlanBuilder = () => {
       setWorkouts(
         workouts.map((w) => (w.id === workoutId ? updatedWorkout : w))
       );
-      toast.success("Đã xóa bài tập");
+      toast.success("Đã xóa bài tập thành công");
     }
+    setShowDeleteExerciseDialog(null);
+  };
+
+  const removeWorkout = (workoutId: string) => {
+    setWorkouts(workouts.filter((w) => w.id !== workoutId));
+    setShowDeleteWorkoutDialog(null);
+    toast.success("Đã xóa buổi tập thành công");
   };
 
   const handleDownloadPDF = () => {
@@ -349,6 +423,18 @@ const WorkoutPlanBuilder = () => {
   const startEditingWorkout = (workout: Workout) => {
     setCurrentEditingWorkout(workout);
     setActiveTab("exercises");
+  };
+
+  const getMuscleLabel = (value: string): string => {
+    return MUSCLE_GROUPS.find(m => m.value === value)?.label || value;
+  };
+  
+  const getDifficultyLabel = (value: string): string => {
+    return DIFFICULTY_LEVELS.find(d => d.value === value)?.label || value;
+  };
+
+  const showExerciseDetails = (exercise: Exercise) => {
+    setExerciseDetailModal(exercise);
   };
 
   return (
@@ -405,14 +491,11 @@ const WorkoutPlanBuilder = () => {
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => startEditingWorkout(workout)}>
                                     <Edit className="h-4 w-4 mr-2" />
-                                    Chỉnh sửa
+                                    Thêm bài tập
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     className="text-destructive focus:text-destructive"
-                                    onClick={() => {
-                                      setWorkouts(workouts.filter((w) => w.id !== workout.id));
-                                      toast.success("Đã xóa buổi tập");
-                                    }}
+                                    onClick={() => setShowDeleteWorkoutDialog(workout.id)}
                                   >
                                     <Trash className="h-4 w-4 mr-2" />
                                     Xóa buổi tập
@@ -423,31 +506,58 @@ const WorkoutPlanBuilder = () => {
                           </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-3">
-                          <div className="space-y-3">
-                            {workout.exercises.map((exercise) => {
-                              const exerciseDetails = getExerciseById(exercise.exerciseId);
-                              if (!exerciseDetails) return null;
-                              
-                              return (
-                                <div key={exercise.exerciseId} className="flex justify-between items-center border-b pb-3 last:border-0 last:pb-0">
-                                  <div className="space-y-1">
-                                    <div className="font-medium">{exerciseDetails.name}</div>
-                                    <div className="text-sm text-gray-500">
-                                      {exercise.sets} x {exercise.reps} | Nghỉ: {exercise.restTime}s
-                                    </div>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-gray-500 hover:text-destructive"
-                                    onClick={() => removeExerciseFromWorkout(workout.id, exercise.exerciseId)}
-                                  >
-                                    <Trash className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              );
-                            })}
-                          </div>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Bài tập</TableHead>
+                                <TableHead>Hiệp x Lần</TableHead>
+                                <TableHead>Nghỉ</TableHead>
+                                <TableHead className="text-right">Thao tác</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {workout.exercises.map((exercise) => {
+                                const exerciseDetails = getExerciseById(exercise.exerciseId);
+                                if (!exerciseDetails) return null;
+                                
+                                return (
+                                  <TableRow key={exercise.exerciseId}>
+                                    <TableCell>
+                                      <div className="font-medium hover:underline cursor-pointer"
+                                           onClick={() => showExerciseDetails(exerciseDetails)}>
+                                        {exerciseDetails.name}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {getMuscleLabel(exerciseDetails.muscle)} • {getDifficultyLabel(exerciseDetails.difficulty)}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>{exercise.sets} x {exercise.reps}</TableCell>
+                                    <TableCell>{exercise.restTime}s</TableCell>
+                                    <TableCell className="text-right">
+                                      <div className="flex justify-end gap-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                          onClick={() => startEditingExercise(workout.id, exercise)}
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                          onClick={() => setShowDeleteExerciseDialog({ workoutId: workout.id, exerciseId: exercise.exerciseId })}
+                                        >
+                                          <Trash className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
                         </CardContent>
                       </Card>
                     ))
@@ -565,13 +675,15 @@ const WorkoutPlanBuilder = () => {
             </div>
           </div>
           <CardDescription>
-            {showAddExerciseForm ? "Chọn bài tập để thêm vào lịch tập" : "Danh sách các bài tập có sẵn"}
+            {showAddExerciseForm ? 
+              (editingExercise ? "Chỉnh sửa bài tập" : "Chọn bài tập để thêm vào lịch tập") : 
+              "Danh sách các bài tập có sẵn"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {showAddExerciseForm ? (
             <div className="space-y-4">
-              {!currentEditingWorkout && (
+              {!currentEditingWorkout && !editingExercise && (
                 <div className="space-y-2">
                   <Label htmlFor="workoutName">Tên buổi tập</Label>
                   <Input
@@ -584,8 +696,14 @@ const WorkoutPlanBuilder = () => {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="exercise">Chọn bài tập</Label>
-                <Select value={selectedExerciseId} onValueChange={setSelectedExerciseId}>
+                <Label htmlFor="exercise">
+                  {editingExercise ? "Bài tập đang chỉnh sửa" : "Chọn bài tập"}
+                </Label>
+                <Select 
+                  value={selectedExerciseId} 
+                  onValueChange={setSelectedExerciseId}
+                  disabled={!!editingExercise}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn bài tập" />
                   </SelectTrigger>
@@ -597,6 +715,12 @@ const WorkoutPlanBuilder = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                
+                {selectedExerciseId && getExerciseById(selectedExerciseId) && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {getExerciseById(selectedExerciseId)?.description}
+                  </div>
+                )}
               </div>
               
               {selectedExerciseId && (
@@ -638,9 +762,17 @@ const WorkoutPlanBuilder = () => {
                     <Button variant="outline" onClick={resetExerciseForm}>
                       Hủy
                     </Button>
-                    <Button onClick={addExerciseToWorkout}>
-                      {currentEditingWorkout ? "Thêm vào buổi tập" : "Tạo buổi tập mới"}
-                    </Button>
+                    {editingExercise ? (
+                      <Button onClick={updateExerciseInWorkout}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Lưu thay đổi
+                      </Button>
+                    ) : (
+                      <Button onClick={addExerciseToWorkout}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        {currentEditingWorkout ? "Thêm vào buổi tập" : "Tạo buổi tập mới"}
+                      </Button>
+                    )}
                   </div>
                 </>
               )}
@@ -650,11 +782,11 @@ const WorkoutPlanBuilder = () => {
               <ScrollArea className="h-[400px] pr-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredExercises.map((exercise) => {
-                    const muscleLabel = MUSCLE_GROUPS.find(m => m.value === exercise.muscle)?.label || exercise.muscle;
-                    const difficultyLabel = DIFFICULTY_LEVELS.find(d => d.value === exercise.difficulty)?.label || exercise.difficulty;
+                    const muscleLabel = getMuscleLabel(exercise.muscle);
+                    const difficultyLabel = getDifficultyLabel(exercise.difficulty);
                     
                     return (
-                      <Card key={exercise.id} className="workout-card cursor-pointer"
+                      <Card key={exercise.id} className="workout-card hover:shadow-md transition-all cursor-pointer"
                            onClick={() => {
                              setSelectedExerciseId(exercise.id);
                              setShowAddExerciseForm(true);
@@ -670,6 +802,20 @@ const WorkoutPlanBuilder = () => {
                             <Badge variant="outline" className="flex items-center gap-1">
                               <Clock className="h-3 w-3" /> {exercise.duration}s
                             </Badge>
+                          </div>
+                          <div className="mt-3 flex justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                showExerciseDetails(exercise);
+                              }}
+                            >
+                              <Info className="h-3 w-3 mr-1" />
+                              Chi tiết
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -696,8 +842,115 @@ const WorkoutPlanBuilder = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Xác nhận xóa bài tập */}
+      <AlertDialog open={!!showDeleteExerciseDialog} onOpenChange={(open) => !open && setShowDeleteExerciseDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa bài tập</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa bài tập này khỏi lịch tập? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (showDeleteExerciseDialog) {
+                  removeExerciseFromWorkout(
+                    showDeleteExerciseDialog.workoutId,
+                    showDeleteExerciseDialog.exerciseId
+                  );
+                }
+              }}
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              Xác nhận xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Xác nhận xóa buổi tập */}
+      <AlertDialog open={!!showDeleteWorkoutDialog} onOpenChange={(open) => !open && setShowDeleteWorkoutDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa buổi tập</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa toàn bộ buổi tập này? Tất cả bài tập trong buổi tập sẽ bị xóa và không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (showDeleteWorkoutDialog) {
+                  removeWorkout(showDeleteWorkoutDialog);
+                }
+              }}
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              Xác nhận xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Chi tiết bài tập */}
+      <AlertDialog open={!!exerciseDetailModal} onOpenChange={(open) => !open && setExerciseDetailModal(null)}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex justify-between items-center">
+              <span>{exerciseDetailModal?.name}</span>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setExerciseDetailModal(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </AlertDialogTitle>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {exerciseDetailModal && (
+                <>
+                  <Badge variant="secondary">{getMuscleLabel(exerciseDetailModal.muscle)}</Badge>
+                  <Badge variant="outline">{getDifficultyLabel(exerciseDetailModal.difficulty)}</Badge>
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> {exerciseDetailModal.duration}s
+                  </Badge>
+                </>
+              )}
+            </div>
+          </AlertDialogHeader>
+          <div className="mt-2">
+            <p className="text-sm leading-relaxed text-gray-700">{exerciseDetailModal?.description}</p>
+
+            <div className="mt-4">
+              <h3 className="text-sm font-medium mb-2">Hướng dẫn thực hiện:</h3>
+              <ul className="text-sm list-disc pl-5 space-y-1">
+                <li>Giữ lưng thẳng và cơ bụng căng</li>
+                <li>Hít vào khi hạ người, thở ra khi nâng người</li>
+                <li>Tập trung vào cảm giác cơ khi thực hiện</li>
+                <li>Thực hiện động tác từ từ và có kiểm soát</li>
+              </ul>
+            </div>
+          </div>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel>Đóng</AlertDialogCancel>
+            <Button onClick={() => {
+              if (exerciseDetailModal) {
+                setSelectedExerciseId(exerciseDetailModal.id);
+                setShowAddExerciseForm(true);
+                setExerciseDetailModal(null);
+              }
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm vào lịch tập
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
 export default WorkoutPlanBuilder;
+
