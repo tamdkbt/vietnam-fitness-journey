@@ -78,7 +78,42 @@ const CustomerPage = () => {
     // Lấy danh sách khách hàng từ localStorage
     const storedCustomers = localStorage.getItem("customers");
     if (storedCustomers) {
-      setCustomers(JSON.parse(storedCustomers));
+      try {
+        const parsedCustomers = JSON.parse(storedCustomers);
+        
+        // Ensure each customer has the required fields
+        const validatedCustomers = parsedCustomers.map((customer: any) => {
+          return {
+            ...customer,
+            // Ensure medicalHistory exists with default values if needed
+            medicalHistory: customer.medicalHistory || {
+              hasHeartIssues: false,
+              hasDiabetes: false,
+              hasAsthma: false,
+              hasArthritis: false,
+              hasHighBloodPressure: false,
+              otherConditions: ""
+            },
+            // Ensure allergies exists with default values if needed
+            allergies: customer.allergies || {
+              hasFoodAllergies: false,
+              foodAllergies: "",
+              hasMedicationAllergies: false,
+              medicationAllergies: "",
+              hasEnvironmentalAllergies: false,
+              environmentalAllergies: ""
+            }
+          };
+        });
+        
+        setCustomers(validatedCustomers);
+        
+        // Update localStorage with the validated customers
+        localStorage.setItem("customers", JSON.stringify(validatedCustomers));
+      } catch (error) {
+        console.error("Error parsing customers:", error);
+        setCustomers([]);
+      }
     }
   }, []);
 
@@ -112,8 +147,33 @@ const CustomerPage = () => {
         const parsedData = JSON.parse(content);
         
         if (Array.isArray(parsedData)) {
-          setCustomers(parsedData);
-          localStorage.setItem("customers", JSON.stringify(parsedData));
+          // Validate and ensure required fields exist
+          const validatedCustomers = parsedData.map((customer: any) => {
+            return {
+              ...customer,
+              // Ensure medicalHistory exists with default values if needed
+              medicalHistory: customer.medicalHistory || {
+                hasHeartIssues: false,
+                hasDiabetes: false,
+                hasAsthma: false,
+                hasArthritis: false,
+                hasHighBloodPressure: false,
+                otherConditions: ""
+              },
+              // Ensure allergies exists with default values if needed
+              allergies: customer.allergies || {
+                hasFoodAllergies: false,
+                foodAllergies: "",
+                hasMedicationAllergies: false,
+                medicationAllergies: "",
+                hasEnvironmentalAllergies: false,
+                environmentalAllergies: ""
+              }
+            };
+          });
+          
+          setCustomers(validatedCustomers);
+          localStorage.setItem("customers", JSON.stringify(validatedCustomers));
           toast.success("Đã nhập dữ liệu khách hàng thành công");
         } else {
           toast.error("Định dạng tệp không hợp lệ");

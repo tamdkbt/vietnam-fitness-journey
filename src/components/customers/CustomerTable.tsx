@@ -144,6 +144,9 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
   const renderHealthConcerns = (customer: Customer) => {
     const { medicalHistory } = customer;
     
+    // Check if medicalHistory exists before accessing its properties
+    if (!medicalHistory) return null;
+    
     const hasMedicalConcerns = 
       medicalHistory.hasHeartIssues || 
       medicalHistory.hasDiabetes || 
@@ -181,6 +184,9 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
   // Render allergies warning if the customer has allergies
   const renderAllergies = (customer: Customer) => {
     const { allergies } = customer;
+    
+    // Check if allergies exists before accessing its properties
+    if (!allergies) return null;
     
     const hasAllergies = 
       (allergies.hasFoodAllergies && allergies.foodAllergies) || 
@@ -438,53 +444,61 @@ const CustomerTable: React.FC<CustomerTableProps> = ({
                                 <AccordionItem value="medical">
                                   <AccordionTrigger className="text-sm py-2">Tiền sử y tế</AccordionTrigger>
                                   <AccordionContent>
-                                    <ul className="text-xs space-y-1 text-gray-600">
-                                      <li className="flex items-center">
-                                        <span className={`w-3 h-3 rounded-full mr-2 ${customer.medicalHistory.hasHeartIssues ? 'bg-red-500' : 'bg-green-500'}`}></span>
-                                        <span>Vấn đề tim mạch: {customer.medicalHistory.hasHeartIssues ? 'Có' : 'Không'}</span>
-                                      </li>
-                                      <li className="flex items-center">
-                                        <span className={`w-3 h-3 rounded-full mr-2 ${customer.medicalHistory.hasDiabetes ? 'bg-red-500' : 'bg-green-500'}`}></span>
-                                        <span>Tiểu đường: {customer.medicalHistory.hasDiabetes ? 'Có' : 'Không'}</span>
-                                      </li>
-                                      <li className="flex items-center">
-                                        <span className={`w-3 h-3 rounded-full mr-2 ${customer.medicalHistory.hasAsthma ? 'bg-red-500' : 'bg-green-500'}`}></span>
-                                        <span>Hen suyễn: {customer.medicalHistory.hasAsthma ? 'Có' : 'Không'}</span>
-                                      </li>
-                                      {customer.medicalHistory.otherConditions && (
-                                        <li className="mt-1">
-                                          <span className="font-medium">Ghi chú khác:</span> {customer.medicalHistory.otherConditions}
+                                    {customer.medicalHistory ? (
+                                      <ul className="text-xs space-y-1 text-gray-600">
+                                        <li className="flex items-center">
+                                          <span className={`w-3 h-3 rounded-full mr-2 ${customer.medicalHistory.hasHeartIssues ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                                          <span>Vấn đề tim mạch: {customer.medicalHistory.hasHeartIssues ? 'Có' : 'Không'}</span>
                                         </li>
-                                      )}
-                                    </ul>
+                                        <li className="flex items-center">
+                                          <span className={`w-3 h-3 rounded-full mr-2 ${customer.medicalHistory.hasDiabetes ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                                          <span>Tiểu đường: {customer.medicalHistory.hasDiabetes ? 'Có' : 'Không'}</span>
+                                        </li>
+                                        <li className="flex items-center">
+                                          <span className={`w-3 h-3 rounded-full mr-2 ${customer.medicalHistory.hasAsthma ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                                          <span>Hen suyễn: {customer.medicalHistory.hasAsthma ? 'Có' : 'Không'}</span>
+                                        </li>
+                                        {customer.medicalHistory.otherConditions && (
+                                          <li className="mt-1">
+                                            <span className="font-medium">Ghi chú khác:</span> {customer.medicalHistory.otherConditions}
+                                          </li>
+                                        )}
+                                      </ul>
+                                    ) : (
+                                      <p className="text-xs italic">Không có thông tin y tế</p>
+                                    )}
                                   </AccordionContent>
                                 </AccordionItem>
                                 
                                 <AccordionItem value="allergies">
                                   <AccordionTrigger className="text-sm py-2">Dị ứng</AccordionTrigger>
                                   <AccordionContent>
-                                    <ul className="text-xs space-y-1 text-gray-600">
-                                      {customer.allergies.hasFoodAllergies && (
-                                        <li>
-                                          <span className="font-medium">Thực phẩm:</span> {customer.allergies.foodAllergies}
-                                        </li>
-                                      )}
-                                      {customer.allergies.hasMedicationAllergies && (
-                                        <li>
-                                          <span className="font-medium">Thuốc:</span> {customer.allergies.medicationAllergies}
-                                        </li>
-                                      )}
-                                      {customer.allergies.hasEnvironmentalAllergies && (
-                                        <li>
-                                          <span className="font-medium">Môi trường:</span> {customer.allergies.environmentalAllergies}
-                                        </li>
-                                      )}
-                                      {!customer.allergies.hasFoodAllergies && 
-                                       !customer.allergies.hasMedicationAllergies && 
-                                       !customer.allergies.hasEnvironmentalAllergies && (
-                                        <li className="italic">Không có dị ứng</li>
-                                      )}
-                                    </ul>
+                                    {customer.allergies ? (
+                                      <ul className="text-xs space-y-1 text-gray-600">
+                                        {customer.allergies.hasFoodAllergies && (
+                                          <li>
+                                            <span className="font-medium">Thực phẩm:</span> {customer.allergies.foodAllergies}
+                                          </li>
+                                        )}
+                                        {customer.allergies.hasMedicationAllergies && (
+                                          <li>
+                                            <span className="font-medium">Thuốc:</span> {customer.allergies.medicationAllergies}
+                                          </li>
+                                        )}
+                                        {customer.allergies.hasEnvironmentalAllergies && (
+                                          <li>
+                                            <span className="font-medium">Môi trường:</span> {customer.allergies.environmentalAllergies}
+                                          </li>
+                                        )}
+                                        {!customer.allergies.hasFoodAllergies && 
+                                        !customer.allergies.hasMedicationAllergies && 
+                                        !customer.allergies.hasEnvironmentalAllergies && (
+                                          <li className="italic">Không có dị ứng</li>
+                                        )}
+                                      </ul>
+                                    ) : (
+                                      <p className="text-xs italic">Không có thông tin dị ứng</p>
+                                    )}
                                   </AccordionContent>
                                 </AccordionItem>
                                 
