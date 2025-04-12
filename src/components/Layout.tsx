@@ -63,7 +63,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 bg-white border-b md:hidden">
         <div className="container flex items-center justify-between h-16 px-4">
-          <h1 className="text-xl font-bold text-primary">Fitness Việt Nam</h1>
+          <h1 className="text-xl font-bold text-primary">FitCoach Pro</h1>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
