@@ -6,6 +6,8 @@ import { vi } from "date-fns/locale";
 import { startOfMonth } from "date-fns";
 import { Appointment } from "../../types/appointment";
 import { checkIsToday, formatDate, getAppointmentsForDay } from "../../utils/dateUtils";
+import { UserCheck, Check } from "lucide-react";
+import { appointmentTypeNameById } from "../../utils/appointmentUtils";
 
 interface MonthlyViewProps {
   daysToDisplay: Date[];
@@ -50,6 +52,33 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
     }
   };
 
+  // Render mặc định cho appointment nếu không có renderAppointment được truyền vào
+  const defaultRenderAppointment = (appointment: Appointment) => (
+    <div
+      className={cn(
+        "text-xs p-1.5 mb-1 rounded",
+        appointment.status === "completed"
+          ? "bg-gray-200 text-gray-700"
+          : "bg-primary/10 text-primary"
+      )}
+    >
+      <div className="font-medium truncate flex justify-between">
+        <span>{appointment.time}</span>
+        <span>{appointment.name.split(" ")[0]}</span>
+      </div>
+      <div className="text-[10px] flex items-center mt-1 truncate">
+        <UserCheck className="h-2.5 w-2.5 mr-1" />
+        <span className="truncate">{appointmentTypeNameById(appointment.type)}</span>
+      </div>
+      {appointment.status === "completed" && (
+        <div className="text-[10px] text-green-600 flex items-center mt-0.5">
+          <Check className="h-2.5 w-2.5 mr-1" />
+          <span>Đã hoàn thành</span>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-7 gap-1 mb-1">
@@ -72,7 +101,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
             <div
               key={i}
               className={cn(
-                "h-24 p-1 rounded border overflow-y-auto",
+                "h-28 p-1 rounded border overflow-y-auto",
                 checkIsToday(day) 
                   ? "bg-accent border-primary" 
                   : "bg-white hover:bg-gray-50 cursor-pointer"
@@ -92,18 +121,12 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                   </div> : 
                   <div
                     key={appointment.id}
-                    className={cn(
-                      "text-xs p-1 mb-1 rounded truncate",
-                      appointment.status === "completed"
-                        ? "bg-gray-200"
-                        : "bg-primary/10 text-primary font-medium"
-                    )}
                     onClick={(e) => {
                       // Ngăn sự kiện click lan sang thẻ cha (ngày)
                       e.stopPropagation();
                     }}
                   >
-                    {appointment.time} - {appointment.name.split(" ")[0]}
+                    {defaultRenderAppointment(appointment)}
                   </div>
               ))}
             </div>

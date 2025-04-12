@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -72,8 +73,25 @@ const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({
       openEditDialog={openEditDialog} 
       handleCompleteAppointment={handleCompleteAppointment}
     >
-      <div className={`text-xs p-1 mb-1 rounded truncate ${appointment.status === "completed" ? "bg-gray-200" : "bg-primary/10 text-primary font-medium"}`}>
-        {appointment.time} - {appointment.name.split(" ")[0]}
+      <div className={`p-1.5 rounded cursor-pointer ${
+        appointment.status === "completed" 
+          ? "bg-gray-200 text-gray-700" 
+          : "bg-primary/10 text-primary"
+      }`}>
+        <div className="font-medium text-xs truncate flex justify-between">
+          <span>{appointment.time}</span>
+          <span>{appointment.name.split(" ")[0]}</span>
+        </div>
+        <div className="text-[10px] flex items-center mt-1 truncate">
+          <UserCheck className="h-2.5 w-2.5 mr-1" />
+          <span className="truncate">{appointmentTypeNameById(appointment.type)}</span>
+        </div>
+        {appointment.status === "completed" && (
+          <div className="text-[10px] text-green-600 flex items-center mt-0.5">
+            <Check className="h-2.5 w-2.5 mr-1" />
+            <span>Đã hoàn thành</span>
+          </div>
+        )}
       </div>
     </AppointmentPopover>
   );
