@@ -89,7 +89,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Sidebar - Desktop only */}
         <aside className="fixed hidden md:flex flex-col w-64 h-screen bg-white border-r">
           <div className="p-6">
-            <h1 className="text-xl font-bold text-primary">Fitness Việt Nam</h1>
+            <h1 className="text-xl font-bold text-primary">FitCoach Pro</h1>
             <p className="text-sm text-muted-foreground mt-1">Hành trình sức khỏe của bạn</p>
           </div>
           <nav className="flex-1 px-4 space-y-1">
