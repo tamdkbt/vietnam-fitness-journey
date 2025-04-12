@@ -4,13 +4,14 @@ import WorkoutPlanBuilder from "../components/WorkoutPlanBuilder";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { InfoIcon, UserCheck } from "lucide-react";
 import { Customer } from "./CustomerPage";
 
 const WorkoutPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Lấy thông tin khách hàng đã chọn từ localStorage

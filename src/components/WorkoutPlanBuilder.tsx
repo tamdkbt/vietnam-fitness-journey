@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { Download, Save } from "lucide-react";
 
-import { DAYS, Exercise, MIN_WORKOUT_DURATION, Workout } from "@/types/workout";
+import { DAYS, Exercise, MIN_WORKOUT_DURATION, Workout, WorkoutView } from "@/types/workout";
 import { EXERCISES, SAMPLE_WORKOUT } from "@/data/workoutData";
 import { calculateWorkoutDuration, formatTime, getExerciseById, isExerciseInDay } from "@/utils/workoutUtils";
 
@@ -17,14 +18,26 @@ import ExerciseDetailsModal from "./workout/modals/ExerciseDetailsModal";
 import AddExerciseModal from "./workout/modals/AddExerciseModal";
 import AddNewExerciseModal from "./workout/modals/AddNewExerciseModal";
 import { DeleteExerciseDialog, DeleteWorkoutDialog } from "./workout/modals/DeleteDialogs";
+import ViewSwitcher from "./workout/ViewSwitcher";
+import MonthView from "./workout/MonthView";
+import QuarterView from "./workout/QuarterView";
+import UnsavedChangesDialog from "./workout/UnsavedChangesDialog";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { format, startOfWeek, getDay } from "date-fns";
+import { vi } from "date-fns/locale";
 
 const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
+  // Initial state
   const [workouts, setWorkouts] = useState<Workout[]>(SAMPLE_WORKOUT);
+  const [savedWorkouts, setSavedWorkouts] = useState<Workout[]>(SAMPLE_WORKOUT);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredMuscle, setFilteredMuscle] = useState<string>("all");
   const [filteredDifficulty, setFilteredDifficulty] = useState<string>("all");
   const [selectedDay, setSelectedDay] = useState<string>("monday");
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [currentView, setCurrentView] = useState<WorkoutView>("week");
 
+  // Modals and dialogs
   const [showDeleteExerciseDialog, setShowDeleteExerciseDialog] = useState<{workoutId: string, exerciseId: string} | null>(null);
   const [showDeleteWorkoutDialog, setShowDeleteWorkoutDialog] = useState<string | null>(null);
   const [exerciseDetailModal, setExerciseDetailModal] = useState<Exercise | null>(null);
@@ -32,6 +45,7 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
   const [showAddExerciseModal, setShowAddExerciseModal] = useState<boolean>(false);
   const [editingExercise, setEditingExercise] = useState<{workoutId: string, exerciseId: string} | null>(null);
   
+  // Form state
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
   const [exerciseSets, setExerciseSets] = useState<number>(3);
   const [exerciseReps, setExerciseReps] = useState<number>(10);
@@ -52,6 +66,22 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
     difficulty: "beginner",
     duration: 10
   });
+
+  // Unsaved changes tracking
+  const { 
+    hasUnsavedChanges, 
+    setHasUnsavedChanges, 
+    showDialog, 
+    confirmNavigation, 
+    cancelNavigation,
+    handleNavigationAttempt
+  } = useUnsavedChanges();
+
+  // Check for unsaved changes by comparing current workouts with saved workouts
+  useEffect(() => {
+    const workoutsChanged = JSON.stringify(workouts) !== JSON.stringify(savedWorkouts);
+    setHasUnsavedChanges(workoutsChanged);
+  }, [workouts, savedWorkouts, setHasUnsavedChanges]);
 
   useEffect(() => {
     setDayForNewExercise(selectedDay);
@@ -110,6 +140,43 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
     setNewWorkoutName("Buổi tập mới");
     setEditingExercise(null);
     setShowAddExerciseModal(false);
+  };
+
+  const saveWorkouts = () => {
+    setSavedWorkouts([...workouts]);
+    setHasUnsavedChanges(false);
+    toast.success("Đã lưu lịch tập thành công");
+  };
+
+  const handleViewChange = (view: WorkoutView) => {
+    setCurrentView(view);
+  };
+
+  const handleDayClick = (date: Date) => {
+    // Get day of week and convert to our day format
+    const dayOfWeek = format(date, 'EEEE', { locale: vi }).toLowerCase();
+    const englishDayMap: Record<string, string> = {
+      'thứ hai': 'monday', 
+      'thứ ba': 'tuesday', 
+      'thứ tư': 'wednesday', 
+      'thứ năm': 'thursday', 
+      'thứ sáu': 'friday', 
+      'thứ bảy': 'saturday',
+      'chủ nhật': 'sunday'
+    };
+    
+    const dayKey = englishDayMap[dayOfWeek] || dayOfWeek;
+    setSelectedDay(dayKey);
+    setCurrentView("week");
+    setCurrentDate(date);
+  };
+
+  const handleWeekClick = (weekStart: Date) => {
+    setCurrentDate(weekStart);
+    setCurrentView("week");
+    
+    // Set the selected day to Monday of the selected week
+    setSelectedDay("monday");
   };
 
   const addExerciseToWorkout = () => {
@@ -290,22 +357,11 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
     toast.success("Đã thêm bài tập mới thành công");
   };
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex justify-between items-center">
-            <CardTitle>Lịch tập của tôi</CardTitle>
-            <Button onClick={handleDownloadPDF}>
-              <Download className="mr-2 h-4 w-4" />
-              Xuất PDF
-            </Button>
-          </div>
-          <CardDescription>
-            Tạo và quản lý lịch tập theo ngày của bạn
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+  // Render different views based on current view state
+  const renderWorkoutView = () => {
+    switch (currentView) {
+      case "week":
+        return (
           <DayTabs 
             selectedDay={selectedDay} 
             onDayChange={setSelectedDay} 
@@ -331,6 +387,57 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
               </TabsContent>
             ))}
           </DayTabs>
+        );
+      case "month":
+        return (
+          <MonthView 
+            currentDate={currentDate}
+            workouts={workouts}
+            onDayClick={handleDayClick}
+          />
+        );
+      case "quarter":
+        return (
+          <QuarterView 
+            currentDate={currentDate}
+            workouts={workouts}
+            onWeekClick={handleWeekClick}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <CardTitle>Lịch tập của tôi</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                onClick={saveWorkouts}
+                disabled={!hasUnsavedChanges}
+                className="flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Lưu thay đổi
+              </Button>
+              <Button onClick={handleDownloadPDF} className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Xuất PDF
+              </Button>
+            </div>
+          </div>
+          <CardDescription className="flex justify-between items-center mt-2">
+            <span>Tạo và quản lý lịch tập theo ngày của bạn</span>
+            <ViewSwitcher currentView={currentView} onViewChange={handleViewChange} />
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {renderWorkoutView()}
         </CardContent>
       </Card>
 
@@ -415,6 +522,16 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
         onRestTimeChange={setExerciseRestTime}
         onDayChange={setDayForNewExercise}
         onSave={editingExercise ? updateExerciseInWorkout : addExerciseToWorkout}
+      />
+
+      <UnsavedChangesDialog
+        isOpen={showDialog}
+        onSaveAndContinue={() => {
+          saveWorkouts();
+          confirmNavigation();
+        }}
+        onLeave={confirmNavigation}
+        onCancel={cancelNavigation}
       />
     </div>
   );

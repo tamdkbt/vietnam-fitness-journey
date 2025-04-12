@@ -62,3 +62,11 @@ export const DIFFICULTY_LEVELS = [
 ];
 
 export const MIN_WORKOUT_DURATION = 15 * 60; // 15 phút trong giây
+
+export type WorkoutView = "week" | "month" | "quarter";
+
+export const VIEWS: { value: WorkoutView; label: string }[] = [
+  { value: "week", label: "Tuần" },
+  { value: "month", label: "Tháng" },
+  { value: "quarter", label: "Quý" },
+];
