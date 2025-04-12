@@ -14,7 +14,8 @@ import {
   Calendar, 
   Dumbbell, 
   Utensils, 
-  LogOut 
+  LogOut,
+  UsersRound
 } from "lucide-react";
 
 interface LayoutProps {
@@ -30,6 +31,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const navigationItems = [
+    {
+      name: "Khách hàng",
+      path: "/customers",
+      icon: <UsersRound className="h-5 w-5" />,
+    },
     {
       name: "Hồ sơ",
       path: "/",
