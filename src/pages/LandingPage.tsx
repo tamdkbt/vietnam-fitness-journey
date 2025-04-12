@@ -19,7 +19,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import heroImage from "../assets/hero-fitness.jpg";
+import heroImage from "@/assets/hero-fitness.jpg";
 
 const LandingPage = () => {
   const [activeSection, setActiveSection] = useState<string>("survey");
