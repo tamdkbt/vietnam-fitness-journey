@@ -107,7 +107,7 @@ const QuarterView: React.FC<QuarterViewProps> = ({ currentDate, workouts, onWeek
                   </div>
                   <div className="mt-1 flex items-center gap-1">
                     {week.daysWithWorkout >= 5 && (
-                      <Badge variant="success" className="h-5 text-[10px] gap-1">
+                      <Badge variant="secondary" className="h-5 text-[10px] gap-1 bg-green-100 text-green-800 hover:bg-green-200">
                         <CheckCircle className="h-3 w-3" /> Tuần năng suất
                       </Badge>
                     )}
