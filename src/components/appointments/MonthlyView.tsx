@@ -1,4 +1,3 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { format, getDay } from "date-fns";
@@ -44,15 +43,12 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
     return daysToDisplay[dayIndex];
   });
 
-  // Xử lý click vào ngày (khu vực trống), không phải vào sự kiện
   const handleDayAreaClick = (e: React.MouseEvent, day: Date) => {
-    // Chỉ xử lý click nếu người dùng click trực tiếp vào div container của ngày, không phải vào appointment
     if (e.currentTarget === e.target) {
       handleDayClick(day);
     }
   };
 
-  // Render mặc định cho appointment nếu không có renderAppointment được truyền vào
   const defaultRenderAppointment = (appointment: Appointment) => (
     <div
       className={cn(
@@ -64,7 +60,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
     >
       <div className="font-medium truncate flex justify-between">
         <span>{appointment.time}</span>
-        <span>{appointment.name.split(" ")[0]}</span>
+        <span>{appointment.name}</span>
       </div>
       <div className="text-[10px] flex items-center mt-1 truncate">
         <UserCheck className="h-2.5 w-2.5 mr-1" />
@@ -92,7 +88,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
       <div className="grid grid-cols-7 gap-1">
         {calendarCells.map((day, i) => {
           if (!day) {
-            return <div key={`empty-${i}`} className="h-24 bg-gray-50 rounded" />;
+            return <div key={`empty-${i}`} className="h-28 bg-gray-50 rounded" />;
           }
           
           const dayAppointments = getAppointmentsForDay(appointments, day);
@@ -114,7 +110,6 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
               {dayAppointments.map((appointment) => (
                 renderAppointment ? 
                   <div key={appointment.id} onClick={(e) => {
-                    // Ngăn sự kiện click lan sang thẻ cha (ngày)
                     e.stopPropagation();
                   }}>
                     {renderAppointment(day, appointment)}
@@ -122,7 +117,6 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                   <div
                     key={appointment.id}
                     onClick={(e) => {
-                      // Ngăn sự kiện click lan sang thẻ cha (ngày)
                       e.stopPropagation();
                     }}
                   >

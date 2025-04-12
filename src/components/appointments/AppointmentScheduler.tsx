@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -80,7 +79,7 @@ const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({
       }`}>
         <div className="font-medium text-xs truncate flex justify-between">
           <span>{appointment.time}</span>
-          <span>{appointment.name.split(" ")[0]}</span>
+          <span>{appointment.name}</span>
         </div>
         <div className="text-[10px] flex items-center mt-1 truncate">
           <UserCheck className="h-2.5 w-2.5 mr-1" />
