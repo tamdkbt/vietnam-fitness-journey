@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
 
@@ -26,7 +25,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
   const [filteredDifficulty, setFilteredDifficulty] = useState<string>("all");
   const [selectedDay, setSelectedDay] = useState<string>("monday");
 
-  // Modals state
   const [showDeleteExerciseDialog, setShowDeleteExerciseDialog] = useState<{workoutId: string, exerciseId: string} | null>(null);
   const [showDeleteWorkoutDialog, setShowDeleteWorkoutDialog] = useState<string | null>(null);
   const [exerciseDetailModal, setExerciseDetailModal] = useState<Exercise | null>(null);
@@ -34,7 +32,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
   const [showAddExerciseModal, setShowAddExerciseModal] = useState<boolean>(false);
   const [editingExercise, setEditingExercise] = useState<{workoutId: string, exerciseId: string} | null>(null);
   
-  // Exercise form state
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
   const [exerciseSets, setExerciseSets] = useState<number>(3);
   const [exerciseReps, setExerciseReps] = useState<number>(10);
@@ -56,12 +53,10 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
     duration: 10
   });
 
-  // Set the selected day as default when adding new exercise
   useEffect(() => {
     setDayForNewExercise(selectedDay);
   }, [selectedDay]);
 
-  // Effect to check if workout duration exceeds the minimum and show notification
   useEffect(() => {
     const currentWorkouts = workouts.filter(workout => workout.day === selectedDay);
     let totalDuration = 0;
@@ -134,7 +129,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
     };
 
     if (existingWorkout) {
-      // Kiểm tra nếu bài tập đã tồn tại trong buổi tập
       const alreadyExists = existingWorkout.exercises.some(ex => ex.exerciseId === selectedExerciseId);
       
       if (alreadyExists) {
@@ -142,7 +136,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
         return;
       }
 
-      // Thêm bài tập vào buổi tập đã tồn tại
       const updatedWorkout = {
         ...existingWorkout,
         exercises: [...existingWorkout.exercises, newExerciseItem]
@@ -152,7 +145,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
         workouts.map(w => w.id === existingWorkout?.id ? updatedWorkout : w)
       );
     } else {
-      // Tạo buổi tập mới nếu không có buổi tập nào trong ngày đó
       const newWorkout: Workout = {
         id: `workout-${Date.now()}`,
         name: newWorkoutName,
@@ -163,7 +155,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
       setWorkouts([...workouts, newWorkout]);
     }
 
-    // Kiểm tra xem tổng thời gian tập đã đạt đủ 15 phút chưa
     const updatedDuration = calculateTotalDurationForDay(targetDay) + 
       (getExerciseById(selectedExerciseId)?.duration || 0) * exerciseSets * exerciseReps + 
       exerciseRestTime * (exerciseSets - 1);
@@ -285,7 +276,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
       duration: newExercise.duration
     };
     
-    // Add to the beginning of the exercises array
     EXERCISES.unshift(exerciseToAdd);
     
     setShowAddNewExerciseModal(false);
@@ -302,7 +292,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
 
   return (
     <div className="space-y-6">
-      {/* Bảng lịch tập theo ngày */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-center">
@@ -323,31 +312,28 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
             calculateTotalDurationForDay={calculateTotalDurationForDay}
           />
           
-          <Tabs value={selectedDay}>
-            {DAYS.map((day) => (
-              <TabsContent key={day.value} value={day.value} className="space-y-4">
-                <DayWorkouts
-                  day={day.value}
-                  workouts={workouts}
-                  calculateTotalDurationForDay={calculateTotalDurationForDay}
-                  onStartEditingExercise={(workoutId, exerciseId, sets, reps, restTime) => 
-                    startEditingExercise(workoutId, exerciseId, sets, reps, restTime)
-                  }
-                  onShowDeleteExerciseDialog={(workoutId, exerciseId) => 
-                    setShowDeleteExerciseDialog({ workoutId, exerciseId })
-                  }
-                  onShowDeleteWorkoutDialog={(workoutId) => 
-                    setShowDeleteWorkoutDialog(workoutId)
-                  }
-                  onShowExerciseDetails={showExerciseDetails}
-                />
-              </TabsContent>
-            ))}
-          </Tabs>
+          {DAYS.map((day) => (
+            <TabsContent key={day.value} value={day.value} className="space-y-4">
+              <DayWorkouts
+                day={day.value}
+                workouts={workouts}
+                calculateTotalDurationForDay={calculateTotalDurationForDay}
+                onStartEditingExercise={(workoutId, exerciseId, sets, reps, restTime) => 
+                  startEditingExercise(workoutId, exerciseId, sets, reps, restTime)
+                }
+                onShowDeleteExerciseDialog={(workoutId, exerciseId) => 
+                  setShowDeleteExerciseDialog({ workoutId, exerciseId })
+                }
+                onShowDeleteWorkoutDialog={(workoutId) => 
+                  setShowDeleteWorkoutDialog(workoutId)
+                }
+                onShowExerciseDetails={showExerciseDetails}
+              />
+            </TabsContent>
+          ))}
         </CardContent>
       </Card>
 
-      {/* Danh sách các bài tập */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-center">
@@ -377,7 +363,6 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
         </CardContent>
       </Card>
 
-      {/* Modals */}
       <DeleteExerciseDialog
         isOpen={!!showDeleteExerciseDialog}
         onClose={() => setShowDeleteExerciseDialog(null)}
