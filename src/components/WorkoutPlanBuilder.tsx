@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
 
@@ -323,25 +323,27 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
             calculateTotalDurationForDay={calculateTotalDurationForDay}
           />
           
-          {DAYS.map((day) => (
-            <TabsContent key={day.value} value={day.value} className="space-y-4">
-              <DayWorkouts
-                day={day.value}
-                workouts={workouts}
-                calculateTotalDurationForDay={calculateTotalDurationForDay}
-                onStartEditingExercise={(workoutId, exerciseId, sets, reps, restTime) => 
-                  startEditingExercise(workoutId, exerciseId, sets, reps, restTime)
-                }
-                onShowDeleteExerciseDialog={(workoutId, exerciseId) => 
-                  setShowDeleteExerciseDialog({ workoutId, exerciseId })
-                }
-                onShowDeleteWorkoutDialog={(workoutId) => 
-                  setShowDeleteWorkoutDialog(workoutId)
-                }
-                onShowExerciseDetails={showExerciseDetails}
-              />
-            </TabsContent>
-          ))}
+          <Tabs value={selectedDay}>
+            {DAYS.map((day) => (
+              <TabsContent key={day.value} value={day.value} className="space-y-4">
+                <DayWorkouts
+                  day={day.value}
+                  workouts={workouts}
+                  calculateTotalDurationForDay={calculateTotalDurationForDay}
+                  onStartEditingExercise={(workoutId, exerciseId, sets, reps, restTime) => 
+                    startEditingExercise(workoutId, exerciseId, sets, reps, restTime)
+                  }
+                  onShowDeleteExerciseDialog={(workoutId, exerciseId) => 
+                    setShowDeleteExerciseDialog({ workoutId, exerciseId })
+                  }
+                  onShowDeleteWorkoutDialog={(workoutId) => 
+                    setShowDeleteWorkoutDialog(workoutId)
+                  }
+                  onShowExerciseDetails={showExerciseDetails}
+                />
+              </TabsContent>
+            ))}
+          </Tabs>
         </CardContent>
       </Card>
 
