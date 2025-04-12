@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -41,7 +40,6 @@ const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({
   
   const daysToDisplay = getDaysToDisplay(view, currentDate);
 
-  // Render appointment for weekly view
   const renderWeeklyAppointment = (day, appointment) => (
     <AppointmentPopover 
       appointment={appointment} 
@@ -67,7 +65,6 @@ const AppointmentScheduler: React.FC<AppointmentSchedulerProps> = ({
     </AppointmentPopover>
   );
 
-  // Render appointment for monthly view - now using the same popover approach as weekly view
   const renderMonthlyAppointment = (day, appointment) => (
     <AppointmentPopover 
       appointment={appointment} 

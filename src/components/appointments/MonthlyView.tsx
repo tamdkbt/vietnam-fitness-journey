@@ -42,6 +42,14 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
     return daysToDisplay[dayIndex];
   });
 
+  // Xử lý click vào ngày (khu vực trống), không phải vào sự kiện
+  const handleDayAreaClick = (e: React.MouseEvent, day: Date) => {
+    // Chỉ xử lý click nếu người dùng click trực tiếp vào div container của ngày, không phải vào appointment
+    if (e.currentTarget === e.target) {
+      handleDayClick(day);
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-7 gap-1 mb-1">
@@ -69,14 +77,19 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                   ? "bg-accent border-primary" 
                   : "bg-white hover:bg-gray-50 cursor-pointer"
               )}
-              onClick={() => handleDayClick(day)}
+              onClick={(e) => handleDayAreaClick(e, day)}
             >
               <div className="text-right text-sm font-medium mb-1">
                 {formatDate(day, "d")}
               </div>
               {dayAppointments.map((appointment) => (
                 renderAppointment ? 
-                  renderAppointment(day, appointment) : 
+                  <div key={appointment.id} onClick={(e) => {
+                    // Ngăn sự kiện click lan sang thẻ cha (ngày)
+                    e.stopPropagation();
+                  }}>
+                    {renderAppointment(day, appointment)}
+                  </div> : 
                   <div
                     key={appointment.id}
                     className={cn(
@@ -85,6 +98,10 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                         ? "bg-gray-200"
                         : "bg-primary/10 text-primary font-medium"
                     )}
+                    onClick={(e) => {
+                      // Ngăn sự kiện click lan sang thẻ cha (ngày)
+                      e.stopPropagation();
+                    }}
                   >
                     {appointment.time} - {appointment.name.split(" ")[0]}
                   </div>
