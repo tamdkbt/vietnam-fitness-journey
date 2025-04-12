@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -43,16 +44,28 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -64,21 +77,19 @@ import {
   Plus, 
   Trash, 
   MoreVertical, 
-  ChevronLeft, 
-  ChevronRight, 
   Calendar, 
   Clock, 
   Activity,
   DumbbellIcon,
   Edit,
-  ArrowRight,
   ChevronDown,
   Info,
   X,
   Save,
-  Check
+  Check,
+  CheckCircle,
+  ArrowRight
 } from "lucide-react";
-import { useForm } from "react-hook-form";
 
 type Exercise = {
   id: string;
@@ -214,6 +225,14 @@ const DAYS = [
   { value: "sunday", label: "Chủ Nhật" },
 ];
 
+const REST_TIMES = [
+  { value: "30", label: "30 giây" },
+  { value: "45", label: "45 giây" },
+  { value: "60", label: "60 giây" },
+  { value: "90", label: "90 giây" },
+  { value: "120", label: "120 giây" },
+];
+
 const MUSCLE_GROUPS = [
   { value: "abs", label: "Bụng" },
   { value: "chest", label: "Ngực" },
@@ -232,25 +251,29 @@ const DIFFICULTY_LEVELS = [
   { value: "advanced", label: "Nâng cao" },
 ];
 
-const WorkoutPlanBuilder = () => {
+const MIN_WORKOUT_DURATION = 15 * 60; // 15 phút trong giây
+
+const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
   const [workouts, setWorkouts] = useState<Workout[]>(SAMPLE_WORKOUT);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredMuscle, setFilteredMuscle] = useState<string>("all");
   const [filteredDifficulty, setFilteredDifficulty] = useState<string>("all");
   const [selectedDay, setSelectedDay] = useState<string>("monday");
-  const [activeTab, setActiveTab] = useState<string>("exercises");
-  const [currentEditingWorkout, setCurrentEditingWorkout] = useState<Workout | null>(null);
-  const [showAddExerciseForm, setShowAddExerciseForm] = useState(false);
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
-  const [exerciseSets, setExerciseSets] = useState<number>(3);
-  const [exerciseReps, setExerciseReps] = useState<number>(10);
-  const [exerciseRestTime, setExerciseRestTime] = useState<number>(60);
-  const [newWorkoutName, setNewWorkoutName] = useState<string>("");
-  const [editingExercise, setEditingExercise] = useState<{workoutId: string, exerciseId: string} | null>(null);
   const [showDeleteExerciseDialog, setShowDeleteExerciseDialog] = useState<{workoutId: string, exerciseId: string} | null>(null);
   const [showDeleteWorkoutDialog, setShowDeleteWorkoutDialog] = useState<string | null>(null);
   const [exerciseDetailModal, setExerciseDetailModal] = useState<Exercise | null>(null);
   const [showAddNewExerciseModal, setShowAddNewExerciseModal] = useState<boolean>(false);
+  const [showAddExerciseModal, setShowAddExerciseModal] = useState<boolean>(false);
+  const [editingExercise, setEditingExercise] = useState<{workoutId: string, exerciseId: string} | null>(null);
+  
+  // New state for adding exercise to workout
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
+  const [exerciseSets, setExerciseSets] = useState<number>(3);
+  const [exerciseReps, setExerciseReps] = useState<number>(10);
+  const [exerciseRestTime, setExerciseRestTime] = useState<number>(60);
+  const [dayForNewExercise, setDayForNewExercise] = useState<string>("");
+  const [newWorkoutName, setNewWorkoutName] = useState<string>("Buổi tập mới");
+  const [showCompletionNotice, setShowCompletionNotice] = useState<boolean>(false);
   const [newExercise, setNewExercise] = useState<{
     name: string;
     description: string;
@@ -265,6 +288,28 @@ const WorkoutPlanBuilder = () => {
     duration: 10
   });
 
+  // Set the selected day as default when adding new exercise
+  useEffect(() => {
+    setDayForNewExercise(selectedDay);
+  }, [selectedDay]);
+
+  // Effect to check if workout duration exceeds the minimum and show notification
+  useEffect(() => {
+    const currentWorkouts = workouts.filter(workout => workout.day === selectedDay);
+    let totalDuration = 0;
+    
+    for (const workout of currentWorkouts) {
+      totalDuration += calculateWorkoutDuration(workout);
+    }
+    
+    if (totalDuration >= MIN_WORKOUT_DURATION && !showCompletionNotice) {
+      setShowCompletionNotice(true);
+      toast.success("🎉 Bạn đã hoàn thành lịch tập cho hôm nay!", {
+        duration: 4000,
+      });
+    }
+  }, [workouts, selectedDay]);
+
   const filteredExercises = EXERCISES.filter((exercise) => {
     const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          exercise.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -274,7 +319,71 @@ const WorkoutPlanBuilder = () => {
     return matchesSearch && matchesMuscle && matchesDifficulty;
   });
 
-  const currentWorkout = workouts.find((workout) => workout.day === selectedDay);
+  const isExerciseInSelectedDay = (exerciseId: string) => {
+    return workouts.some(workout => 
+      workout.day === selectedDay && 
+      workout.exercises.some(ex => ex.exerciseId === exerciseId)
+    );
+  };
+
+  const getExerciseById = (id: string): Exercise | undefined => {
+    return EXERCISES.find((ex) => ex.id === id);
+  };
+
+  const getDayLabel = (value: string): string => {
+    return DAYS.find((day) => day.value === value)?.label || value;
+  };
+  
+  const getMuscleLabel = (value: string): string => {
+    return MUSCLE_GROUPS.find(m => m.value === value)?.label || value;
+  };
+  
+  const getDifficultyLabel = (value: string): string => {
+    return DIFFICULTY_LEVELS.find(d => d.value === value)?.label || value;
+  };
+
+  const calculateWorkoutDuration = (workout: Workout): number => {
+    return workout.exercises.reduce((total, exercise) => {
+      const exerciseDetails = getExerciseById(exercise.exerciseId);
+      if (!exerciseDetails) return total;
+      
+      // Thời gian thực hiện = thời gian của mỗi lần x số lần x số hiệp + thời gian nghỉ x (số hiệp - 1)
+      return total + (exerciseDetails.duration * exercise.sets * exercise.reps) + 
+                     (exercise.restTime * (exercise.sets - 1));
+    }, 0);
+  };
+
+  const calculateTotalDurationForDay = (day: string): number => {
+    return workouts
+      .filter(workout => workout.day === day)
+      .reduce((total, workout) => total + calculateWorkoutDuration(workout), 0);
+  };
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const openAddExerciseModal = (exerciseId: string) => {
+    setSelectedExerciseId(exerciseId);
+    setDayForNewExercise(selectedDay);
+    setExerciseSets(3);
+    setExerciseReps(10);
+    setExerciseRestTime(60);
+    setShowAddExerciseModal(true);
+  };
+
+  const resetExerciseForm = () => {
+    setSelectedExerciseId("");
+    setExerciseSets(3);
+    setExerciseReps(10);
+    setExerciseRestTime(60);
+    setDayForNewExercise(selectedDay);
+    setNewWorkoutName("Buổi tập mới");
+    setEditingExercise(null);
+    setShowAddExerciseModal(false);
+  };
 
   const addExerciseToWorkout = () => {
     if (!selectedExerciseId) {
@@ -282,59 +391,59 @@ const WorkoutPlanBuilder = () => {
       return;
     }
 
-    if (!currentEditingWorkout) {
-      if (!newWorkoutName) {
-        toast.error("Vui lòng đặt tên cho buổi tập");
+    const targetDay = dayForNewExercise || selectedDay;
+    let existingWorkout = workouts.find(w => w.day === targetDay);
+    
+    const newExerciseItem = {
+      exerciseId: selectedExerciseId,
+      sets: exerciseSets,
+      reps: exerciseReps,
+      restTime: exerciseRestTime,
+    };
+
+    if (existingWorkout) {
+      // Kiểm tra nếu bài tập đã tồn tại trong buổi tập
+      const alreadyExists = existingWorkout.exercises.some(ex => ex.exerciseId === selectedExerciseId);
+      
+      if (alreadyExists) {
+        toast.error("Bài tập này đã có trong lịch tập hôm nay");
         return;
       }
 
-      const newWorkout: Workout = {
-        id: `workout-${Date.now()}`,
-        name: newWorkoutName,
-        day: selectedDay,
-        exercises: [
-          {
-            exerciseId: selectedExerciseId,
-            sets: exerciseSets,
-            reps: exerciseReps,
-            restTime: exerciseRestTime,
-          },
-        ],
-      };
-
-      setWorkouts([...workouts, newWorkout]);
-      toast.success("Đã tạo buổi tập mới thành công");
-    } else {
-      const existingExercise = currentEditingWorkout.exercises.find(
-        (ex) => ex.exerciseId === selectedExerciseId
-      );
-
-      if (existingExercise) {
-        toast.error("Bài tập này đã có trong buổi tập");
-        return;
-      }
-
+      // Thêm bài tập vào buổi tập đã tồn tại
       const updatedWorkout = {
-        ...currentEditingWorkout,
-        exercises: [
-          ...currentEditingWorkout.exercises,
-          {
-            exerciseId: selectedExerciseId,
-            sets: exerciseSets,
-            reps: exerciseReps,
-            restTime: exerciseRestTime,
-          },
-        ],
+        ...existingWorkout,
+        exercises: [...existingWorkout.exercises, newExerciseItem]
       };
 
       setWorkouts(
-        workouts.map((w) =>
-          w.id === currentEditingWorkout.id ? updatedWorkout : w
-        )
+        workouts.map(w => w.id === existingWorkout?.id ? updatedWorkout : w)
       );
-      toast.success("Đã thêm bài tập vào buổi tập thành công");
+    } else {
+      // Tạo buổi tập mới nếu không có buổi tập nào trong ngày đó
+      const newWorkout: Workout = {
+        id: `workout-${Date.now()}`,
+        name: newWorkoutName,
+        day: targetDay,
+        exercises: [newExerciseItem],
+      };
+
+      setWorkouts([...workouts, newWorkout]);
     }
 
+    // Kiểm tra xem tổng thời gian tập đã đạt đủ 15 phút chưa
+    const updatedDuration = calculateTotalDurationForDay(targetDay) + 
+      (getExerciseById(selectedExerciseId)?.duration || 0) * exerciseSets * exerciseReps + 
+      exerciseRestTime * (exerciseSets - 1);
+    
+    if (updatedDuration >= MIN_WORKOUT_DURATION) {
+      setShowCompletionNotice(true);
+      toast.success("🎉 Bạn đã hoàn thành lịch tập cho hôm nay!", {
+        duration: 4000,
+      });
+    }
+
+    toast.success("Đã thêm bài tập vào lịch tập thành công");
     resetExerciseForm();
   };
 
@@ -369,18 +478,8 @@ const WorkoutPlanBuilder = () => {
     setExerciseSets(exercise.sets);
     setExerciseReps(exercise.reps);
     setExerciseRestTime(exercise.restTime);
-    setShowAddExerciseForm(true);
-    setActiveTab("exercises");
-  };
-
-  const resetExerciseForm = () => {
-    setSelectedExerciseId("");
-    setExerciseSets(3);
-    setExerciseReps(10);
-    setExerciseRestTime(60);
-    setShowAddExerciseForm(false);
-    setNewWorkoutName("");
-    setEditingExercise(null);
+    setDayForNewExercise(workout.day);
+    setShowAddExerciseModal(true);
   };
 
   const removeExerciseFromWorkout = (workoutId: string, exerciseId: string) => {
@@ -415,37 +514,6 @@ const WorkoutPlanBuilder = () => {
     toast.success("Đã xuất lịch tập thành công");
   };
 
-  const getExerciseById = (id: string): Exercise | undefined => {
-    return EXERCISES.find((ex) => ex.id === id);
-  };
-
-  const getDayLabel = (value: string): string => {
-    return DAYS.find((day) => day.value === value)?.label || value;
-  };
-
-  const calculateWorkoutDuration = (workout: Workout): number => {
-    return workout.exercises.reduce((total, exercise) => {
-      const exerciseDetails = getExerciseById(exercise.exerciseId);
-      if (!exerciseDetails) return total;
-      
-      return total + (exerciseDetails.duration * exercise.sets) + 
-                     (exercise.restTime * (exercise.sets - 1));
-    }, 0);
-  };
-
-  const startEditingWorkout = (workout: Workout) => {
-    setCurrentEditingWorkout(workout);
-    setActiveTab("exercises");
-  };
-
-  const getMuscleLabel = (value: string): string => {
-    return MUSCLE_GROUPS.find(m => m.value === value)?.label || value;
-  };
-  
-  const getDifficultyLabel = (value: string): string => {
-    return DIFFICULTY_LEVELS.find(d => d.value === value)?.label || value;
-  };
-
   const showExerciseDetails = (exercise: Exercise) => {
     setExerciseDetailModal(exercise);
   };
@@ -477,6 +545,7 @@ const WorkoutPlanBuilder = () => {
       duration: newExercise.duration
     };
     
+    // Add to the beginning of the exercises array
     EXERCISES.unshift(exerciseToAdd);
     
     setShowAddNewExerciseModal(false);
@@ -493,6 +562,7 @@ const WorkoutPlanBuilder = () => {
 
   return (
     <div className="space-y-6">
+      {/* Bảng lịch tập theo ngày */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-center">
@@ -509,143 +579,134 @@ const WorkoutPlanBuilder = () => {
         <CardContent>
           <Tabs defaultValue="monday" value={selectedDay} onValueChange={setSelectedDay}>
             <TabsList className="grid grid-cols-7 mb-4">
-              {DAYS.map((day) => (
-                <TabsTrigger key={day.value} value={day.value}>
-                  {day.label}
-                </TabsTrigger>
-              ))}
+              {DAYS.map((day) => {
+                const duration = calculateTotalDurationForDay(day.value);
+                const hasCompletedWorkout = duration >= MIN_WORKOUT_DURATION;
+                
+                return (
+                  <TabsTrigger key={day.value} value={day.value} className="relative">
+                    {day.label}
+                    {hasCompletedWorkout && (
+                      <span className="absolute top-0 right-0 transform translate-x-1/3 -translate-y-1/3">
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                      </span>
+                    )}
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
             
             {DAYS.map((day) => {
               const dayWorkouts = workouts.filter((workout) => workout.day === day.value);
+              const totalDuration = calculateTotalDurationForDay(day.value);
+              const hasCompletedWorkout = totalDuration >= MIN_WORKOUT_DURATION;
               
               return (
                 <TabsContent key={day.value} value={day.value} className="space-y-4">
                   {dayWorkouts.length > 0 ? (
-                    dayWorkouts.map((workout) => (
-                      <Card key={workout.id} className="overflow-hidden workout-card">
-                        <CardHeader className="p-4 pb-2 bg-primary/5">
-                          <div className="flex justify-between items-center">
-                            <CardTitle className="text-lg font-medium">
-                              {workout.name}
-                            </CardTitle>
-                            <div className="flex gap-2 items-center">
-                              <Badge variant="outline" className="flex gap-1 items-center">
-                                <Clock className="h-3 w-3" />
-                                {Math.floor(calculateWorkoutDuration(workout) / 60)} phút
-                              </Badge>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Tùy chọn</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => startEditingWorkout(workout)}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Thêm bài tập
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onClick={() => setShowDeleteWorkoutDialog(workout.id)}
-                                  >
-                                    <Trash className="h-4 w-4 mr-2" />
-                                    Xóa buổi tập
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                    <>
+                      {hasCompletedWorkout && (
+                        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md flex items-center text-green-700">
+                          <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+                          <p>🎉 Bạn đã hoàn thành lịch tập cho hôm nay! (Tổng thời gian: {formatTime(totalDuration)})</p>
+                        </div>
+                      )}
+                    
+                      {dayWorkouts.map((workout) => (
+                        <Card key={workout.id} className="overflow-hidden workout-card">
+                          <CardHeader className="p-4 pb-2 bg-primary/5">
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-lg font-medium">
+                                {workout.name}
+                              </CardTitle>
+                              <div className="flex gap-2 items-center">
+                                <Badge variant="outline" className="flex gap-1 items-center">
+                                  <Clock className="h-3 w-3" />
+                                  {formatTime(calculateWorkoutDuration(workout))}
+                                </Badge>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Tùy chọn</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      onClick={() => setShowDeleteWorkoutDialog(workout.id)}
+                                    >
+                                      <Trash className="h-4 w-4 mr-2" />
+                                      Xóa buổi tập
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-3">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Bài tập</TableHead>
-                                <TableHead>Hiệp x Lần</TableHead>
-                                <TableHead>Nghỉ</TableHead>
-                                <TableHead className="text-right">Thao tác</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {workout.exercises.map((exercise) => {
-                                const exerciseDetails = getExerciseById(exercise.exerciseId);
-                                if (!exerciseDetails) return null;
-                                
-                                return (
-                                  <TableRow key={exercise.exerciseId}>
-                                    <TableCell>
-                                      <div className="font-medium hover:underline cursor-pointer"
-                                           onClick={() => showExerciseDetails(exerciseDetails)}>
-                                        {exerciseDetails.name}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {getMuscleLabel(exerciseDetails.muscle)} • {getDifficultyLabel(exerciseDetails.difficulty)}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell>{exercise.sets} x {exercise.reps}</TableCell>
-                                    <TableCell>{exercise.restTime}s</TableCell>
-                                    <TableCell className="text-right">
-                                      <div className="flex justify-end gap-2">
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                          onClick={() => startEditingExercise(workout.id, exercise)}
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                          onClick={() => setShowDeleteExerciseDialog({ workoutId: workout.id, exerciseId: exercise.exerciseId })}
-                                        >
-                                          <Trash className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </CardContent>
-                      </Card>
-                    ))
+                          </CardHeader>
+                          <CardContent className="p-4 pt-3">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Bài tập</TableHead>
+                                  <TableHead>Hiệp x Lần</TableHead>
+                                  <TableHead>Nghỉ</TableHead>
+                                  <TableHead className="text-right">Thao tác</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {workout.exercises.map((exercise) => {
+                                  const exerciseDetails = getExerciseById(exercise.exerciseId);
+                                  if (!exerciseDetails) return null;
+                                  
+                                  return (
+                                    <TableRow key={exercise.exerciseId}>
+                                      <TableCell>
+                                        <div className="font-medium hover:underline cursor-pointer"
+                                             onClick={() => showExerciseDetails(exerciseDetails)}>
+                                          {exerciseDetails.name}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {getMuscleLabel(exerciseDetails.muscle)} • {getDifficultyLabel(exerciseDetails.difficulty)}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>{exercise.sets} x {exercise.reps}</TableCell>
+                                      <TableCell>{exercise.restTime}s</TableCell>
+                                      <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                            onClick={() => startEditingExercise(workout.id, exercise)}
+                                          >
+                                            <Edit className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                            onClick={() => setShowDeleteExerciseDialog({ workoutId: workout.id, exerciseId: exercise.exerciseId })}
+                                          >
+                                            <Trash className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                       <DumbbellIcon className="h-12 w-12 mb-4 text-gray-300" />
-                      <h3 className="text-lg font-medium mb-2">Chưa có buổi tập nào</h3>
-                      <p className="mb-4">Hãy thêm buổi tập mới cho {getDayLabel(day.value)}</p>
-                      <Button onClick={() => {
-                        setCurrentEditingWorkout(null);
-                        setSelectedDay(day.value);
-                        setActiveTab("exercises");
-                        setShowAddExerciseForm(true);
-                      }}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Thêm buổi tập
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {dayWorkouts.length > 0 && (
-                    <div className="flex justify-center pt-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setCurrentEditingWorkout(null);
-                          setSelectedDay(day.value);
-                          setActiveTab("exercises");
-                          setShowAddExerciseForm(true);
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Thêm buổi tập mới
-                      </Button>
+                      <h3 className="text-lg font-medium mb-2">Chưa có bài tập nào</h3>
+                      <p className="mb-4">Hãy thêm bài tập mới cho {getDayLabel(day.value)}</p>
                     </div>
                   )}
                 </TabsContent>
@@ -655,7 +716,8 @@ const WorkoutPlanBuilder = () => {
         </CardContent>
       </Card>
 
-      <Card className={activeTab === "exercises" ? "" : "hidden"}>
+      {/* Danh sách các bài tập */}
+      <Card>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-center">
             <CardTitle>Danh sách bài tập</CardTitle>
@@ -738,174 +800,89 @@ const WorkoutPlanBuilder = () => {
             </div>
           </div>
           <CardDescription>
-            {showAddExerciseForm ? 
-              (editingExercise ? "Chỉnh sửa bài tập" : "Chọn bài tập để thêm vào lịch tập") : 
-              "Danh sách các bài tập có sẵn"}
+            Danh sách các bài tập có sẵn. Chọn bài tập để thêm vào lịch tập.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {showAddExerciseForm ? (
-            <div className="space-y-4">
-              {!currentEditingWorkout && !editingExercise && (
-                <div className="space-y-2">
-                  <Label htmlFor="workoutName">Tên buổi tập</Label>
-                  <Input
-                    id="workoutName"
-                    placeholder="Nhập tên buổi tập"
-                    value={newWorkoutName}
-                    onChange={(e) => setNewWorkoutName(e.target.value)}
-                  />
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="exercise">
-                  {editingExercise ? "Bài tập đang chỉnh sửa" : "Chọn bài tập"}
-                </Label>
-                <Select 
-                  value={selectedExerciseId} 
-                  onValueChange={setSelectedExerciseId}
-                  disabled={!!editingExercise}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn bài tập" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredExercises.map((exercise) => (
-                      <SelectItem key={exercise.id} value={exercise.id}>
-                        {exercise.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredExercises.map((exercise) => {
+                const muscleLabel = getMuscleLabel(exercise.muscle);
+                const difficultyLabel = getDifficultyLabel(exercise.difficulty);
+                const isInSelectedDay = isExerciseInSelectedDay(exercise.id);
                 
-                {selectedExerciseId && getExerciseById(selectedExerciseId) && (
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {getExerciseById(selectedExerciseId)?.description}
-                  </div>
-                )}
-              </div>
-              
-              {selectedExerciseId && (
-                <>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="sets">Số hiệp</Label>
-                      <Input
-                        id="sets"
-                        type="number"
-                        min="1"
-                        value={exerciseSets}
-                        onChange={(e) => setExerciseSets(Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="reps">Số lần</Label>
-                      <Input
-                        id="reps"
-                        type="number"
-                        min="1"
-                        value={exerciseReps}
-                        onChange={(e) => setExerciseReps(Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="restTime">Thời gian nghỉ (giây)</Label>
-                      <Input
-                        id="restTime"
-                        type="number"
-                        min="0"
-                        value={exerciseRestTime}
-                        onChange={(e) => setExerciseRestTime(Number(e.target.value))}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end space-x-2 pt-2">
-                    <Button variant="outline" onClick={resetExerciseForm}>
-                      Hủy
-                    </Button>
-                    {editingExercise ? (
-                      <Button onClick={updateExerciseInWorkout}>
-                        <Save className="mr-2 h-4 w-4" />
-                        Lưu thay đổi
-                      </Button>
-                    ) : (
-                      <Button onClick={addExerciseToWorkout}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        {currentEditingWorkout ? "Thêm vào buổi tập" : "Tạo buổi tập mới"}
-                      </Button>
+                return (
+                  <Card 
+                    key={exercise.id} 
+                    className={`workout-card hover:shadow-md transition-all cursor-pointer relative ${
+                      isInSelectedDay ? 'border-primary border-2' : ''
+                    }`}
+                  >
+                    {isInSelectedDay && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="default" className="bg-primary">
+                          <Check className="h-3 w-3 mr-1" />
+                          Đã thêm
+                        </Badge>
+                      </div>
                     )}
-                  </div>
-                </>
-              )}
+                    <CardHeader className="p-4 pb-2">
+                      <CardTitle className="text-base font-medium">{exercise.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-2">
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{exercise.description}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary">{muscleLabel}</Badge>
+                        <Badge variant="outline">{difficultyLabel}</Badge>
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {exercise.duration}s
+                        </Badge>
+                      </div>
+                      <div className="mt-3 flex justify-between">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            showExerciseDetails(exercise);
+                          }}
+                        >
+                          <Info className="h-3 w-3 mr-1" />
+                          Chi tiết
+                        </Button>
+                        
+                        <Button
+                          variant="outline" 
+                          size="sm"
+                          className="text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openAddExerciseModal(exercise.id);
+                          }}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Thêm vào lịch
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          ) : (
-            <>
-              <ScrollArea className="h-[400px] pr-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredExercises.map((exercise) => {
-                    const muscleLabel = getMuscleLabel(exercise.muscle);
-                    const difficultyLabel = getDifficultyLabel(exercise.difficulty);
-                    
-                    return (
-                      <Card key={exercise.id} className="workout-card hover:shadow-md transition-all cursor-pointer"
-                           onClick={() => {
-                             setSelectedExerciseId(exercise.id);
-                             setShowAddExerciseForm(true);
-                           }}>
-                        <CardHeader className="p-4 pb-2">
-                          <CardTitle className="text-base font-medium">{exercise.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-2">
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{exercise.description}</p>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="secondary">{muscleLabel}</Badge>
-                            <Badge variant="outline">{difficultyLabel}</Badge>
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" /> {exercise.duration}s
-                            </Badge>
-                          </div>
-                          <div className="mt-3 flex justify-end">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                showExerciseDetails(exercise);
-                              }}
-                            >
-                              <Info className="h-3 w-3 mr-1" />
-                              Chi tiết
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-                
-                {filteredExercises.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">
-                      Không tìm thấy bài tập nào phù hợp với bộ lọc.
-                    </p>
-                  </div>
-                )}
-              </ScrollArea>
-              
-              <div className="mt-4 flex justify-center">
-                <Button onClick={() => setShowAddExerciseForm(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Thêm bài tập vào lịch
-                </Button>
+            
+            {filteredExercises.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500">
+                  Không tìm thấy bài tập nào phù hợp với bộ lọc.
+                </p>
               </div>
-            </>
-          )}
+            )}
+          </ScrollArea>
         </CardContent>
       </Card>
 
+      {/* Dialog xác nhận xóa bài tập */}
       <AlertDialog open={!!showDeleteExerciseDialog} onOpenChange={(open) => !open && setShowDeleteExerciseDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -934,6 +911,7 @@ const WorkoutPlanBuilder = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Dialog xác nhận xóa buổi tập */}
       <AlertDialog open={!!showDeleteWorkoutDialog} onOpenChange={(open) => !open && setShowDeleteWorkoutDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -959,6 +937,7 @@ const WorkoutPlanBuilder = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Modal chi tiết bài tập */}
       <AlertDialog open={!!exerciseDetailModal} onOpenChange={(open) => !open && setExerciseDetailModal(null)}>
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
@@ -997,8 +976,7 @@ const WorkoutPlanBuilder = () => {
             <AlertDialogCancel>Đóng</AlertDialogCancel>
             <Button onClick={() => {
               if (exerciseDetailModal) {
-                setSelectedExerciseId(exerciseDetailModal.id);
-                setShowAddExerciseForm(true);
+                openAddExerciseModal(exerciseDetailModal.id);
                 setExerciseDetailModal(null);
               }
             }}>
@@ -1009,6 +987,7 @@ const WorkoutPlanBuilder = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Modal thêm bài tập mới vào thư viện */}
       <AlertDialog open={showAddNewExerciseModal} onOpenChange={setShowAddNewExerciseModal}>
         <AlertDialogContent className="sm:max-w-lg">
           <AlertDialogHeader>
@@ -1102,6 +1081,115 @@ const WorkoutPlanBuilder = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal thêm bài tập vào lịch */}
+      <Dialog open={showAddExerciseModal} onOpenChange={setShowAddExerciseModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingExercise ? "Cập nhật bài tập" : "Thêm bài tập vào lịch"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingExercise 
+                ? "Chỉnh sửa thông tin bài tập trong lịch tập của bạn" 
+                : "Chọn ngày và thông số chi tiết cho bài tập"}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            {selectedExerciseId && (
+              <div className="p-3 border rounded-md bg-muted/50">
+                <h3 className="font-medium mb-1">
+                  {getExerciseById(selectedExerciseId)?.name}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {getExerciseById(selectedExerciseId)?.description}
+                </p>
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="day">Ngày tập</Label>
+              <Select 
+                value={dayForNewExercise} 
+                onValueChange={setDayForNewExercise}
+                disabled={!!editingExercise}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn ngày" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS.map((day) => (
+                    <SelectItem key={day.value} value={day.value}>
+                      {day.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="sets">Số hiệp</Label>
+                <Input
+                  id="sets"
+                  type="number"
+                  min="1"
+                  value={exerciseSets}
+                  onChange={(e) => setExerciseSets(Number(e.target.value))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="reps">Số lần</Label>
+                <Input
+                  id="reps"
+                  type="number"
+                  min="1"
+                  value={exerciseReps}
+                  onChange={(e) => setExerciseReps(Number(e.target.value))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="rest">Thời gian nghỉ</Label>
+                <Select 
+                  value={exerciseRestTime.toString()} 
+                  onValueChange={(value) => setExerciseRestTime(Number(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn thời gian" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REST_TIMES.map((time) => (
+                      <SelectItem key={time.value} value={time.value}>
+                        {time.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddExerciseModal(false)}>
+              Hủy
+            </Button>
+            {editingExercise ? (
+              <Button onClick={updateExerciseInWorkout}>
+                <Save className="mr-2 h-4 w-4" />
+                Cập nhật
+              </Button>
+            ) : (
+              <Button onClick={addExerciseToWorkout}>
+                <Plus className="mr-2 h-4 w-4" />
+                Thêm vào lịch
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -26,7 +26,7 @@ const WorkoutPage = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Kế hoạch tập luyện</h1>
           <p className="text-gray-600">
-            Tạo và quản lý lịch tập luyện của bạn theo từng ngày trong tuần
+            Tạo và quản lý lịch tập luyện theo từng ngày trong tuần
           </p>
         </div>
         
