@@ -75,11 +75,8 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                 {formatDate(day, "d")}
               </div>
               {dayAppointments.map((appointment) => (
-                renderAppointment ? (
-                  <React.Fragment key={appointment.id}>
-                    {renderAppointment(day, appointment)}
-                  </React.Fragment>
-                ) : (
+                renderAppointment ? 
+                  renderAppointment(day, appointment) : 
                   <div
                     key={appointment.id}
                     className={cn(
@@ -91,7 +88,6 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                   >
                     {appointment.time} - {appointment.name.split(" ")[0]}
                   </div>
-                )
               ))}
             </div>
           );
