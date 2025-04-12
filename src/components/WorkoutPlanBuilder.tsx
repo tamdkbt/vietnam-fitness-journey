@@ -310,27 +310,27 @@ const WorkoutPlanBuilder = ({ key }: { key?: string }) => {
             selectedDay={selectedDay} 
             onDayChange={setSelectedDay} 
             calculateTotalDurationForDay={calculateTotalDurationForDay}
-          />
-          
-          {DAYS.map((day) => (
-            <TabsContent key={day.value} value={day.value} className="space-y-4">
-              <DayWorkouts
-                day={day.value}
-                workouts={workouts}
-                calculateTotalDurationForDay={calculateTotalDurationForDay}
-                onStartEditingExercise={(workoutId, exerciseId, sets, reps, restTime) => 
-                  startEditingExercise(workoutId, exerciseId, sets, reps, restTime)
-                }
-                onShowDeleteExerciseDialog={(workoutId, exerciseId) => 
-                  setShowDeleteExerciseDialog({ workoutId, exerciseId })
-                }
-                onShowDeleteWorkoutDialog={(workoutId) => 
-                  setShowDeleteWorkoutDialog(workoutId)
-                }
-                onShowExerciseDetails={showExerciseDetails}
-              />
-            </TabsContent>
-          ))}
+          >
+            {DAYS.map((day) => (
+              <TabsContent key={day.value} value={day.value} className="space-y-4">
+                <DayWorkouts
+                  day={day.value}
+                  workouts={workouts}
+                  calculateTotalDurationForDay={calculateTotalDurationForDay}
+                  onStartEditingExercise={(workoutId, exerciseId, sets, reps, restTime) => 
+                    startEditingExercise(workoutId, exerciseId, sets, reps, restTime)
+                  }
+                  onShowDeleteExerciseDialog={(workoutId, exerciseId) => 
+                    setShowDeleteExerciseDialog({ workoutId, exerciseId })
+                  }
+                  onShowDeleteWorkoutDialog={(workoutId) => 
+                    setShowDeleteWorkoutDialog(workoutId)
+                  }
+                  onShowExerciseDetails={showExerciseDetails}
+                />
+              </TabsContent>
+            ))}
+          </DayTabs>
         </CardContent>
       </Card>
 

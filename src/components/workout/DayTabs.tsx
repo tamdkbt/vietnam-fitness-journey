@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DAYS, MIN_WORKOUT_DURATION } from "@/types/workout";
 import { CheckCircle } from "lucide-react";
 
@@ -8,12 +8,14 @@ interface DayTabsProps {
   selectedDay: string;
   onDayChange: (day: string) => void;
   calculateTotalDurationForDay: (day: string) => number;
+  children: React.ReactNode; // Add children prop to render TabsContent
 }
 
 const DayTabs: React.FC<DayTabsProps> = ({ 
   selectedDay, 
   onDayChange,
-  calculateTotalDurationForDay 
+  calculateTotalDurationForDay,
+  children
 }) => {
   return (
     <Tabs value={selectedDay} onValueChange={onDayChange}>
@@ -34,6 +36,7 @@ const DayTabs: React.FC<DayTabsProps> = ({
           );
         })}
       </TabsList>
+      {children}
     </Tabs>
   );
 };
