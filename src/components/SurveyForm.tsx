@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Card, 
@@ -36,6 +37,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer } from "@/types/customer";
+import { supabase } from "@/integrations/supabase/client";
 
 type PersonalInfo = {
   name: string;
@@ -71,6 +73,7 @@ type Allergies = {
 const SurveyForm = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
     name: "",
     age: "",
@@ -100,7 +103,7 @@ const SurveyForm = () => {
     environmentalAllergies: "",
   });
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (step === 1) {
       if (!personalInfo.name || !personalInfo.age || !personalInfo.gender || !personalInfo.height || !personalInfo.weight) {
         toast.error("Vui lòng điền đầy đủ thông tin");
@@ -127,63 +130,84 @@ const SurveyForm = () => {
     if (step < 6) {
       setStep(step + 1);
     } else {
-      const newCustomer: Customer = {
-        id: Math.random().toString(36).substring(2, 9),
-        name: personalInfo.name,
-        age: Number(personalInfo.age),
-        gender: personalInfo.gender,
-        height: Number(personalInfo.height),
-        weight: Number(personalInfo.weight),
-        goal,
-        activityLevel,
-        dietType,
-        dietDetails,
-        preferredTime,
-        medicalHistory,
-        allergies,
-        createdAt: new Date().toISOString(),
-      };
+      setLoading(true);
       
-      const storedCustomers = localStorage.getItem("customers");
-      const customers = storedCustomers ? JSON.parse(storedCustomers) : [];
-      
-      customers.push(newCustomer);
-      
-      localStorage.setItem("customers", JSON.stringify(customers));
-      
-      toast.success("Cảm ơn bạn đã hoàn thành khảo sát!");
-      
-      setStep(1);
-      setPersonalInfo({
-        name: "",
-        age: "",
-        gender: "",
-        height: "",
-        weight: "",
-      });
-      setGoal("");
-      setActivityLevel("");
-      setDietType("");
-      setDietDetails("");
-      setPreferredTime("");
-      setMedicalHistory({
-        hasHeartIssues: false,
-        hasDiabetes: false,
-        hasAsthma: false,
-        hasArthritis: false,
-        hasHighBloodPressure: false,
-        otherConditions: "",
-      });
-      setAllergies({
-        hasFoodAllergies: false,
-        foodAllergies: "",
-        hasMedicationAllergies: false,
-        medicationAllergies: "",
-        hasEnvironmentalAllergies: false,
-        environmentalAllergies: "",
-      });
-      
-      navigate("/customers");
+      try {
+        // Kiểm tra phiên đăng nhập hiện tại
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          toast.error("Bạn cần đăng nhập để lưu thông tin khách hàng");
+          navigate("/login");
+          return;
+        }
+        
+        // Chuẩn bị dữ liệu khách hàng
+        const healthConditions = JSON.stringify({
+          medicalHistory,
+          allergies
+        });
+        
+        // Lưu dữ liệu khách hàng vào Supabase
+        const { data, error } = await supabase
+          .from('customers')
+          .insert({
+            name: personalInfo.name,
+            age: Number(personalInfo.age),
+            email: personalInfo.gender === 'female' ? 'customer@female.com' : 
+                   personalInfo.gender === 'male' ? 'customer@male.com' : 
+                   'customer@other.com',
+            height: Number(personalInfo.height),
+            weight: Number(personalInfo.weight),
+            goals: goal,
+            health_conditions: healthConditions,
+            user_id: session.user.id,
+          })
+          .select();
+        
+        if (error) throw error;
+        
+        toast.success("Cảm ơn bạn đã hoàn thành khảo sát!");
+        
+        // Reset form
+        setStep(1);
+        setPersonalInfo({
+          name: "",
+          age: "",
+          gender: "",
+          height: "",
+          weight: "",
+        });
+        setGoal("");
+        setActivityLevel("");
+        setDietType("");
+        setDietDetails("");
+        setPreferredTime("");
+        setMedicalHistory({
+          hasHeartIssues: false,
+          hasDiabetes: false,
+          hasAsthma: false,
+          hasArthritis: false,
+          hasHighBloodPressure: false,
+          otherConditions: "",
+        });
+        setAllergies({
+          hasFoodAllergies: false,
+          foodAllergies: "",
+          hasMedicationAllergies: false,
+          medicationAllergies: "",
+          hasEnvironmentalAllergies: false,
+          environmentalAllergies: "",
+        });
+        
+        // Chuyển hướng đến trang danh sách khách hàng
+        navigate("/customers");
+      } catch (error: any) {
+        console.error("Lỗi khi lưu thông tin khách hàng:", error);
+        toast.error(`Đã xảy ra lỗi: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -686,15 +710,20 @@ const SurveyForm = () => {
         
         <CardFooter className="flex justify-between pt-6">
           {step > 1 ? (
-            <Button variant="outline" onClick={prevStep}>
+            <Button variant="outline" onClick={prevStep} disabled={loading}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Quay lại
             </Button>
           ) : (
             <div></div>
           )}
-          <Button onClick={nextStep}>
-            {step === 6 ? (
+          <Button onClick={nextStep} disabled={loading}>
+            {loading ? (
+              <div className="flex items-center">
+                <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full"></div>
+                Đang xử lý...
+              </div>
+            ) : step === 6 ? (
               <>
                 Hoàn thành
                 <Check className="h-4 w-4 ml-2" />

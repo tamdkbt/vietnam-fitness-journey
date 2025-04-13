@@ -1,64 +1,65 @@
 
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Info } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Customer } from "@/types/customer";
-import UpcomingAppointments from "./details/UpcomingAppointments";
+import { AppointmentUtils } from "./details/AppointmentUtils";
 import ProgressGoals from "./details/ProgressGoals";
 import HealthInfo from "./details/HealthInfo";
-import { AppointmentType } from "./details/AppointmentUtils";
+
+// Define a type for appointment
+interface AppointmentItem {
+  id: string;
+  customerId: string;
+  date: string;
+  time: string;
+  type: string;
+}
+
+interface CustomerAppointments {
+  upcoming: AppointmentItem[];
+  past: AppointmentItem[];
+}
 
 interface ExpandedCustomerDetailsProps {
   customer: Customer;
   expandedCustomer: string | null;
-  customerAppointments: {
-    upcoming: AppointmentType[];
-    past: AppointmentType[];
-  };
+  customerAppointments: CustomerAppointments;
   selectCustomerAndNavigate: (customer: Customer, destination: string) => void;
 }
 
-const ExpandedCustomerDetails: React.FC<ExpandedCustomerDetailsProps> = ({
-  customer,
-  expandedCustomer,
+const ExpandedCustomerDetails: React.FC<ExpandedCustomerDetailsProps> = ({ 
+  customer, 
+  expandedCustomer, 
   customerAppointments,
   selectCustomerAndNavigate
 }) => {
-  if (expandedCustomer !== customer.id) return null;
+  if (expandedCustomer !== customer.id) {
+    return null;
+  }
 
   return (
-    <TableRow>
-      <TableCell colSpan={5} className="p-0 border-t-0">
-        <div className="p-4 bg-gray-50">
-          <div className="flex flex-col space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Lịch hẹn sắp tới */}
-              <UpcomingAppointments 
-                customerId={customer.id} 
-                appointments={customerAppointments.upcoming} 
-              />
-              
-              {/* Tiến độ mục tiêu */}
-              <ProgressGoals />
-              
-              {/* Thông tin sức khỏe */}
-              <HealthInfo customer={customer} />
-            </div>
-            
-            <div className="flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs"
-                onClick={() => selectCustomerAndNavigate(customer, "appointments")}
-              >
-                <Info className="h-3.5 w-3.5 mr-1" />
-                Xem chi tiết hồ sơ
-              </Button>
-            </div>
-          </div>
-        </div>
+    <TableRow className="bg-gray-50 border-t border-b">
+      <TableCell colSpan={5} className="p-4">
+        <Tabs defaultValue="appointments" className="w-full">
+          <TabsList className="w-full mb-4 bg-white">
+            <TabsTrigger value="appointments" className="flex-1">Lịch hẹn</TabsTrigger>
+            <TabsTrigger value="progress" className="flex-1">Tiến độ</TabsTrigger>
+            <TabsTrigger value="health" className="flex-1">Sức khỏe</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="appointments" className="space-y-4">
+            <AppointmentUtils customer={customer} />
+          </TabsContent>
+          
+          <TabsContent value="progress">
+            <ProgressGoals customer={customer} />
+          </TabsContent>
+          
+          <TabsContent value="health">
+            <HealthInfo customer={customer} />
+          </TabsContent>
+        </Tabs>
       </TableCell>
     </TableRow>
   );
