@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 
+// Define the props interface
 interface AppointmentUtilsProps {
   customer: Customer;
 }
 
+// Use the props interface in the component definition
 export const AppointmentUtils: React.FC<AppointmentUtilsProps> = ({ customer }) => {
   return (
     <div className="space-y-4">
