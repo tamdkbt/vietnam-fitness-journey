@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Table, TableBody } from "@/components/ui/table";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Customer } from "../../../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 import CustomerTableHeader from "./CustomerTableHeader";
 import CustomerRow from "./CustomerRow";
 import ExpandedCustomerDetails from "./ExpandedCustomerDetails";

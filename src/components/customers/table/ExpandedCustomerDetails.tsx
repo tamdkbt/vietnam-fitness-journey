@@ -17,7 +17,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Customer } from "../../../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 
 interface AppointmentType {
   id: string;

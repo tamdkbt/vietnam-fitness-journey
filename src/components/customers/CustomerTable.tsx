@@ -1,7 +1,7 @@
 
 import React from "react";
 import CustomerTable from "./table/CustomerTable";
-import { Customer } from "../../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 
 interface CustomerTableWrapperProps {
   customers: Customer[];

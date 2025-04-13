@@ -19,7 +19,7 @@ import {
   Dumbbell, 
   Utensils,
 } from "lucide-react";
-import { Customer } from "../../../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 
 interface CustomerActionsProps {
   customer: Customer;

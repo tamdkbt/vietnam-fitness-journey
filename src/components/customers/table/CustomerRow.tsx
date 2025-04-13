@@ -3,7 +3,7 @@ import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Customer } from "../../../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 import CustomerActions from "./CustomerActions";
 import { HealthConcernsIndicator, AllergiesIndicator } from "./HealthIndicators";
 

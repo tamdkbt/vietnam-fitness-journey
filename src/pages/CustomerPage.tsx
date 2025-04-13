@@ -1,250 +1,43 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { 
-  Users, 
-  Filter, 
-  Search,
-  SlidersHorizontal,
-  FileDown,
-  FileUp
-} from "lucide-react";
+import { Users } from "lucide-react";
 import { toast } from "sonner";
 import CustomerTable from "../components/customers/CustomerTable";
-import CustomerSearch from "../components/customers/CustomerSearch";
 import EmptyCustomerState from "../components/customers/EmptyCustomerState";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { supabase } from "@/integrations/supabase/client";
-
-export type MedicalHistory = {
-  hasHeartIssues: boolean;
-  hasDiabetes: boolean;
-  hasAsthma: boolean;
-  hasArthritis: boolean;
-  hasHighBloodPressure: boolean;
-  otherConditions: string;
-};
-
-export type Allergies = {
-  hasFoodAllergies: boolean;
-  foodAllergies: string;
-  hasMedicationAllergies: boolean;
-  medicationAllergies: string;
-  hasEnvironmentalAllergies: boolean;
-  environmentalAllergies: string;
-};
-
-export type Customer = {
-  id: string;
-  name: string;
-  age: number;
-  gender: string;
-  height: number;
-  weight: number;
-  goal: string;
-  activityLevel: string;
-  dietType: string;
-  dietDetails?: string;
-  preferredTime: string;
-  createdAt: string;
-  medicalHistory: MedicalHistory;
-  allergies: Allergies;
-};
+import CustomerPageHeader from "../components/customers/CustomerPageHeader";
+import CustomerFilters from "../components/customers/CustomerFilters";
+import { useCustomers } from "@/hooks/useCustomers";
+import { 
+  exportCustomers as exportCustomersUtil, 
+  importCustomers as importCustomersUtil,
+  filterCustomerBySearchTerm,
+  filterCustomersByGoal,
+  filterCustomersByGender,
+  sortCustomers
+} from "@/utils/customerUtils";
 
 const CustomerPage = () => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [goalFilter, setGoalFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name");
-  const [loading, setLoading] = useState(true);
   
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  const { 
+    customers, 
+    loading, 
+    handleDeleteCustomer, 
+    fetchCustomers,
+    setCustomers
+  } = useCustomers();
 
-  const fetchCustomers = async () => {
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*');
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (data) {
-        const formattedCustomers = data.map(customer => ({
-          id: customer.id,
-          name: customer.name,
-          age: customer.age || 0,
-          gender: customer.email?.includes('@female') ? 'female' : 
-                  customer.email?.includes('@male') ? 'male' : 'other',
-          height: customer.height || 0,
-          weight: customer.weight || 0,
-          goal: customer.goals || 'general-health',
-          activityLevel: 'moderate',
-          dietType: 'balanced',
-          dietDetails: '',
-          preferredTime: 'morning',
-          createdAt: customer.created_at,
-          medicalHistory: customer.health_conditions ? 
-            JSON.parse(customer.health_conditions)?.medicalHistory || {
-              hasHeartIssues: false,
-              hasDiabetes: false,
-              hasAsthma: false,
-              hasArthritis: false,
-              hasHighBloodPressure: false,
-              otherConditions: ""
-            } : {
-              hasHeartIssues: false,
-              hasDiabetes: false,
-              hasAsthma: false,
-              hasArthritis: false,
-              hasHighBloodPressure: false,
-              otherConditions: ""
-            },
-          allergies: customer.health_conditions ? 
-            JSON.parse(customer.health_conditions)?.allergies || {
-              hasFoodAllergies: false,
-              foodAllergies: "",
-              hasMedicationAllergies: false,
-              medicationAllergies: "",
-              hasEnvironmentalAllergies: false,
-              environmentalAllergies: ""
-            } : {
-              hasFoodAllergies: false,
-              foodAllergies: "",
-              hasMedicationAllergies: false,
-              medicationAllergies: "",
-              hasEnvironmentalAllergies: false,
-              environmentalAllergies: ""
-            }
-        }));
-        
-        setCustomers(formattedCustomers);
-      }
-    } catch (error: any) {
-      toast.error(`Lỗi khi tải danh sách khách hàng: ${error.message}`);
-      console.error("Error fetching customers:", error);
-    } finally {
-      setLoading(false);
-    }
+  const exportCustomersHandler = () => {
+    exportCustomersUtil(customers);
   };
 
-  const handleDeleteCustomer = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('customers')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        throw error;
-      }
-      
-      setCustomers(customers.filter(customer => customer.id !== id));
-      toast.success("Đã xóa khách hàng thành công");
-    } catch (error: any) {
-      toast.error(`Lỗi khi xóa khách hàng: ${error.message}`);
-      console.error("Error deleting customer:", error);
-    }
-  };
-
-  const exportCustomers = () => {
-    const dataStr = JSON.stringify(customers, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = 'customers.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    
-    toast.success("Đã xuất dữ liệu khách hàng thành công");
-  };
-
-  const importCustomers = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const fileReader = new FileReader();
-    fileReader.readAsText(event.target.files?.[0] as File, "UTF-8");
-    fileReader.onload = async (e) => {
-      try {
-        const content = e.target?.result as string;
-        const parsedData = JSON.parse(content);
-        
-        if (Array.isArray(parsedData)) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-            toast.error("Bạn cần đăng nhập để nhập dữ liệu khách hàng");
-            return;
-          }
-          
-          const customerPromises = parsedData.map(async (customer) => {
-            const healthConditions = JSON.stringify({
-              medicalHistory: customer.medicalHistory || {
-                hasHeartIssues: false,
-                hasDiabetes: false,
-                hasAsthma: false,
-                hasArthritis: false,
-                hasHighBloodPressure: false,
-                otherConditions: ""
-              },
-              allergies: customer.allergies || {
-                hasFoodAllergies: false,
-                foodAllergies: "",
-                hasMedicationAllergies: false,
-                medicationAllergies: "",
-                hasEnvironmentalAllergies: false,
-                environmentalAllergies: ""
-              }
-            });
-            
-            return supabase
-              .from('customers')
-              .insert({
-                name: customer.name,
-                age: customer.age || 0,
-                email: customer.gender === 'female' ? 'customer@female.com' : 
-                       customer.gender === 'male' ? 'customer@male.com' : 
-                       'customer@other.com',
-                height: customer.height || 0,
-                weight: customer.weight || 0,
-                goals: customer.goal || 'general-health',
-                health_conditions: healthConditions,
-                user_id: session.user.id,
-              });
-          });
-          
-          await Promise.all(customerPromises);
-          
-          fetchCustomers();
-          toast.success("Đã nhập dữ liệu khách hàng thành công");
-        } else {
-          toast.error("Định dạng tệp không hợp lệ");
-        }
-      } catch (error: any) {
-        toast.error(`Lỗi khi đọc tệp: ${error.message}`);
-        console.error("Error importing customers:", error);
-      }
-    };
-    
-    event.target.value = "";
+  const importCustomersHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+    importCustomersUtil(event, fetchCustomers);
   };
 
   const resetFilters = () => {
@@ -255,55 +48,20 @@ const CustomerPage = () => {
     toast.success("Đã đặt lại bộ lọc");
   };
 
+  // Apply filters and sorting
+  let filteredCustomers = filterCustomerBySearchTerm(customers, searchTerm);
+  filteredCustomers = filterCustomersByGoal(filteredCustomers, goalFilter);
+  filteredCustomers = filterCustomersByGender(filteredCustomers, genderFilter);
+  filteredCustomers = sortCustomers(filteredCustomers, sortBy);
+
   return (
     <Layout>
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Danh sách khách hàng</h1>
-            <p className="text-gray-600">
-              Quản lý thông tin khách hàng và tạo kế hoạch tập luyện, dinh dưỡng
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-            <Link to="/customer/new">
-              <Button size="sm" className="flex items-center gap-1">
-                <Users className="h-4 w-4" />
-                Thêm khách hàng
-              </Button>
-            </Link>
-            
-            <div className="hidden">
-              <input 
-                type="file" 
-                id="importFile" 
-                accept=".json" 
-                onChange={importCustomers}
-                className="hidden" 
-              />
-            </div>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => document.getElementById('importFile')?.click()}
-              className="flex items-center gap-1"
-            >
-              <FileUp className="h-4 w-4" />
-              <span className="hidden sm:inline">Nhập dữ liệu</span>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={exportCustomers}
-              className="flex items-center gap-1"
-            >
-              <FileDown className="h-4 w-4" />
-              <span className="hidden sm:inline">Xuất dữ liệu</span>
-            </Button>
-          </div>
-        </div>
+        <CustomerPageHeader 
+          customersCount={customers.length}
+          exportCustomers={exportCustomersHandler}
+          importCustomers={importCustomersHandler}
+        />
 
         <Card>
           <CardHeader className="pb-3">
@@ -324,90 +82,19 @@ const CustomerPage = () => {
               </div>
             ) : customers.length > 0 ? (
               <>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-4">
-                  <div className="w-full md:w-1/3">
-                    <CustomerSearch 
-                      searchTerm={searchTerm} 
-                      setSearchTerm={setSearchTerm} 
-                    />
-                  </div>
-                  
-                  <div className="flex gap-2 flex-wrap">
-                    <Select 
-                      value={goalFilter} 
-                      onValueChange={setGoalFilter}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4" />
-                          <SelectValue placeholder="Mục tiêu" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả mục tiêu</SelectItem>
-                        <SelectItem value="weight-loss">Giảm cân</SelectItem>
-                        <SelectItem value="muscle-gain">Tăng cơ</SelectItem>
-                        <SelectItem value="general-health">Sức khỏe</SelectItem>
-                        <SelectItem value="endurance">Thể lực</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <Select 
-                      value={genderFilter} 
-                      onValueChange={setGenderFilter}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4" />
-                          <SelectValue placeholder="Giới tính" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả giới tính</SelectItem>
-                        <SelectItem value="male">Nam</SelectItem>
-                        <SelectItem value="female">Nữ</SelectItem>
-                        <SelectItem value="other">Khác</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-10">
-                          <SlidersHorizontal className="h-4 w-4 mr-2" />
-                          <span className="hidden sm:inline">Tùy chọn</span>
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-56 p-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm">Sắp xếp theo</h4>
-                          <Select 
-                            value={sortBy} 
-                            onValueChange={setSortBy}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Sắp xếp theo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="name">Tên</SelectItem>
-                              <SelectItem value="age">Tuổi</SelectItem>
-                              <SelectItem value="created">Ngày tạo</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          
-                          <Button 
-                            onClick={resetFilters} 
-                            variant="outline" 
-                            className="w-full mt-2"
-                          >
-                            Đặt lại bộ lọc
-                          </Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
+                <CustomerFilters 
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  goalFilter={goalFilter}
+                  setGoalFilter={setGoalFilter}
+                  genderFilter={genderFilter}
+                  setGenderFilter={setGenderFilter}
+                  sortBy={sortBy}
+                  setSortBy={setSortBy}
+                  resetFilters={resetFilters}
+                />
                 <CustomerTable 
-                  customers={customers} 
+                  customers={filteredCustomers} 
                   searchTerm={searchTerm}
                   onDeleteCustomer={handleDeleteCustomer}
                 />

@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Customer } from "../../../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 
 interface HealthIndicatorsProps {
   customer: Customer;
