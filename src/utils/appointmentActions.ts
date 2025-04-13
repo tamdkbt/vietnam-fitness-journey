@@ -17,7 +17,8 @@ export const fetchAppointments = async (selectedCustomer: any = null) => {
     
     let query = supabase
       .from('appointments')
-      .select('*');
+      .select('*')
+      .eq('user_id', sessionData.session.user.id);
       
     // Filter by customer_id if a customer is selected
     if (selectedCustomer?.id) {
