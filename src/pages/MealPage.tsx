@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import MealPlanBuilder from "../components/MealPlanBuilder";
 import Layout from "../components/Layout";
@@ -7,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { InfoIcon, UserCheck } from "lucide-react";
-import { Customer } from "./CustomerPage";
+import { Customer } from "@/types/customer";
 
 const MealPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);

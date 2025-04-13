@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import WorkoutPlanBuilder from "../components/WorkoutPlanBuilder";
 import Layout from "../components/Layout";
@@ -7,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { InfoIcon, UserCheck } from "lucide-react";
-import { Customer } from "./CustomerPage";
+import { Customer } from "@/types/customer";
 
 const WorkoutPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);

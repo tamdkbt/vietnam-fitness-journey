@@ -1,5 +1,5 @@
 
-import { Customer } from "../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 
 export type AppointmentStatus = "scheduled" | "completed" | "cancelled";
 

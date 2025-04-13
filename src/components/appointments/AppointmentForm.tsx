@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { X, Check } from "lucide-react";
 import { APPOINTMENT_TYPES, HOURS, Appointment } from "../../types/appointment";
-import { Customer } from "../../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 
 interface AppointmentFormProps {
   selectedDate: Date;

@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { InfoIcon, UserCheck } from "lucide-react";
-import { Customer } from "./CustomerPage";
+import { Customer } from "@/types/customer";
 import AppointmentScheduler from "../components/appointments/AppointmentScheduler";
 
 const AppointmentPage = () => {

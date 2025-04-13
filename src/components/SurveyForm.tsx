@@ -35,7 +35,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Customer } from "../pages/CustomerPage";
+import { Customer } from "@/types/customer";
 
 type PersonalInfo = {
   name: string;
