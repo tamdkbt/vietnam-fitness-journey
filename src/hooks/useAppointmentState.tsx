@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { addDays } from "date-fns";
-import { Appointment } from "../types/appointment";
+import { Appointment, AppointmentStatus } from "../types/appointment";
 import { toast } from "sonner";
 import { navigateNext, navigatePrevious } from "../utils/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,9 +49,9 @@ export const useAppointmentState = (selectedCustomer: any) => {
           id: app.id,
           date: new Date(app.date),
           time: app.time,
-          name: app.customer_name || 'Không có tên',
+          name: app.customer_id ? (selectedCustomer?.name || 'Chưa chọn khách hàng') : 'Lịch hẹn không có khách hàng',
           type: app.type,
-          status: app.status || 'scheduled',
+          status: (app.status || 'scheduled') as AppointmentStatus,
         }));
         
         setAppointments(formattedAppointments);
@@ -103,9 +102,8 @@ export const useAppointmentState = (selectedCustomer: any) => {
           .from('appointments')
           .update({
             time: newAppointment.time,
-            customer_name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
-            type: newAppointment.type,
             customer_id: selectedCustomer ? selectedCustomer.id : null,
+            type: newAppointment.type,
             notes: "",
             status: 'scheduled'
           })
@@ -124,6 +122,7 @@ export const useAppointmentState = (selectedCustomer: any) => {
                   time: newAppointment.time,
                   name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
                   type: newAppointment.type,
+                  status: "scheduled",
                 }
               : app
           )
@@ -138,9 +137,8 @@ export const useAppointmentState = (selectedCustomer: any) => {
           .insert({
             date: formattedDate,
             time: newAppointment.time,
-            customer_name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
-            type: newAppointment.type,
             customer_id: selectedCustomer ? selectedCustomer.id : null,
+            type: newAppointment.type,
             user_id: sessionData.session.user.id, // Set user_id to current user
             notes: "",
             status: 'scheduled'
@@ -159,7 +157,7 @@ export const useAppointmentState = (selectedCustomer: any) => {
             time: newAppointment.time,
             name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
             type: newAppointment.type,
-            status: 'scheduled',
+            status: "scheduled",
           };
           setAppointments([...appointments, newApp]);
         }
