@@ -18,7 +18,13 @@ export const fetchAppointments = async (selectedCustomer: any = null) => {
     
     let query = supabase
       .from('appointments')
-      .select('*')
+      .select(`
+        *,
+        customers (
+          id,
+          name
+        )
+      `)
       .eq('user_id', sessionData.session.user.id);
       
     // Filter by customer_id if a customer is selected
@@ -33,11 +39,11 @@ export const fetchAppointments = async (selectedCustomer: any = null) => {
     }
     
     if (data) {
-      const formattedAppointments = data.map((app: AppointmentDB) => ({
+      const formattedAppointments = data.map((app: any) => ({
         id: app.id,
         date: new Date(app.date),
         time: app.time,
-        name: selectedCustomer?.name || 'Chưa chọn khách hàng',
+        name: app.customers?.name || selectedCustomer?.name || 'Chưa chọn khách hàng',
         type: app.type,
         status: (app.status || 'scheduled') as AppointmentStatus,
       }));
