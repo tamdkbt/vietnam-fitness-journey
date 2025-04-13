@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,9 +19,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-// Import the hero image 
-// Using a direct public path instead of a relative import to ensure it works in all build environments
-const heroImagePath = "/lovable-uploads/d29bcf61-5db7-4ab1-b531-fde65c5ac393.png";
+// Sử dụng đường dẫn tuyệt đối cho hình ảnh hero
+const heroImagePath = "/lovable-uploads/be41f201-9ab3-4a3b-aeaa-6110c1e7639c.png";
 
 const LandingPage = () => {
   const [activeSection, setActiveSection] = useState<string>("survey");
@@ -107,7 +105,7 @@ const LandingPage = () => {
           <img
             className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
             src={heroImagePath}
-            alt="Person exercising"
+            alt="Người tập thể dục"
           />
         </div>
       </section>
