@@ -3,6 +3,21 @@ import { Appointment, AppointmentStatus } from "../types/appointment";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Define extended type for DB appointments that includes customer_name
+type AppointmentDB = {
+  id: string;
+  date: string;
+  time: string;
+  customer_id: string | null;
+  customer_name?: string | null; // Make this optional to fix the error
+  type: string;
+  status: string | null;
+  notes: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export const fetchAppointments = async (selectedCustomer: any = null) => {
   try {
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -32,7 +47,7 @@ export const fetchAppointments = async (selectedCustomer: any = null) => {
     }
     
     if (data) {
-      const formattedAppointments = data.map(app => ({
+      const formattedAppointments = data.map((app: AppointmentDB) => ({
         id: app.id,
         date: new Date(app.date),
         time: app.time,
