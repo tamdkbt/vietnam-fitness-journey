@@ -1,9 +1,15 @@
+
 import { useState, useEffect } from "react";
-import { addDays } from "date-fns";
-import { Appointment, AppointmentStatus } from "../types/appointment";
+import { Appointment } from "../types/appointment";
 import { toast } from "sonner";
-import { navigateNext, navigatePrevious } from "../utils/dateUtils";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  fetchAppointments,
+  addAppointment,
+  updateAppointment,
+  deleteAppointment,
+  completeAppointment
+} from "../utils/appointmentActions";
+import { handleNext, handlePrevious } from "../utils/appointmentDateUtils";
 
 export const useAppointmentState = (selectedCustomer: any) => {
   const [view, setView] = useState<"week" | "month">("week");
@@ -20,61 +26,26 @@ export const useAppointmentState = (selectedCustomer: any) => {
   const [loading, setLoading] = useState(true);
 
   // Fetch appointments from Supabase
-  const fetchAppointments = async () => {
+  const loadAppointments = async () => {
     try {
       setLoading(true);
-      
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        throw sessionError;
-      }
-      
-      if (!sessionData.session) {
-        setAppointments([]);
-        return;
-      }
-      
-      // RLS will ensure we only get appointments belonging to the current user
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*');
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (data) {
-        const formattedAppointments = data.map(app => ({
-          id: app.id,
-          date: new Date(app.date),
-          time: app.time,
-          name: app.customer_id ? (selectedCustomer?.name || 'Chưa chọn khách hàng') : 'Lịch hẹn không có khách hàng',
-          type: app.type,
-          status: (app.status || 'scheduled') as AppointmentStatus,
-        }));
-        
-        setAppointments(formattedAppointments);
-      }
-      
-    } catch (error: any) {
-      console.error("Error fetching appointments:", error);
-      toast.error(`Lỗi khi tải lịch hẹn: ${error.message}`);
+      const fetchedAppointments = await fetchAppointments(selectedCustomer);
+      setAppointments(fetchedAppointments);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAppointments();
-  }, []);
+    loadAppointments();
+  }, [selectedCustomer]);
 
-  const handlePrevious = () => {
-    setCurrentDate(navigatePrevious(currentDate, view));
+  const handleNavigatePrevious = () => {
+    setCurrentDate(handlePrevious(currentDate, view));
   };
 
-  const handleNext = () => {
-    setCurrentDate(navigateNext(currentDate, view));
+  const handleNavigateNext = () => {
+    setCurrentDate(handleNext(currentDate, view));
   };
 
   const handleAddAppointment = async () => {
@@ -89,80 +60,29 @@ export const useAppointmentState = (selectedCustomer: any) => {
         return;
       }
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData.session) {
-        toast.error("Bạn cần đăng nhập để thêm lịch hẹn");
-        return;
-      }
-
       if (editingAppointment) {
         // Update existing appointment
-        const { error } = await supabase
-          .from('appointments')
-          .update({
-            time: newAppointment.time,
-            customer_id: selectedCustomer ? selectedCustomer.id : null,
-            type: newAppointment.type,
-            notes: "",
-            status: 'scheduled'
-          })
-          .eq('id', editingAppointment.id);
-          
-        if (error) {
-          throw error;
-        }
-        
-        // Update local state
-        setAppointments(
-          appointments.map((app) =>
-            app.id === editingAppointment.id
-              ? {
-                  ...app,
-                  time: newAppointment.time,
-                  name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
-                  type: newAppointment.type,
-                  status: "scheduled",
-                }
-              : app
-          )
+        const updatedAppointment = await updateAppointment(
+          editingAppointment,
+          newAppointment,
+          selectedCustomer
         );
-        toast.success("Đã cập nhật lịch hẹn thành công");
+        
+        if (updatedAppointment) {
+          // Update local state
+          setAppointments(
+            appointments.map((app) =>
+              app.id === editingAppointment.id ? updatedAppointment : app
+            )
+          );
+        }
       } else {
         // Insert new appointment
-        const formattedDate = selectedDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+        const newApp = await addAppointment(selectedDate, newAppointment, selectedCustomer);
         
-        const { data, error } = await supabase
-          .from('appointments')
-          .insert({
-            date: formattedDate,
-            time: newAppointment.time,
-            customer_id: selectedCustomer ? selectedCustomer.id : null,
-            type: newAppointment.type,
-            user_id: sessionData.session.user.id, // Set user_id to current user
-            notes: "",
-            status: 'scheduled'
-          })
-          .select();
-          
-        if (error) {
-          throw error;
-        }
-        
-        // Update local state
-        if (data && data.length > 0) {
-          const newApp: Appointment = {
-            id: data[0].id,
-            date: selectedDate,
-            time: newAppointment.time,
-            name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
-            type: newAppointment.type,
-            status: "scheduled",
-          };
+        if (newApp) {
           setAppointments([...appointments, newApp]);
         }
-        
-        toast.success("Đã thêm lịch hẹn thành công");
       }
 
       setIsDialogOpen(false);
@@ -176,49 +96,24 @@ export const useAppointmentState = (selectedCustomer: any) => {
   };
 
   const handleDeleteAppointment = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', id);
-        
-      if (error) {
-        throw error;
-      }
-      
+    const success = await deleteAppointment(id);
+    
+    if (success) {
       setAppointments(appointments.filter((app) => app.id !== id));
-      toast.success("Đã xóa lịch hẹn thành công");
       setIsDialogOpen(false);
       setEditingAppointment(null);
-      
-    } catch (error: any) {
-      console.error("Error deleting appointment:", error);
-      toast.error(`Lỗi khi xóa lịch hẹn: ${error.message}`);
     }
   };
 
   const handleCompleteAppointment = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: 'completed' })
-        .eq('id', id);
-        
-      if (error) {
-        throw error;
-      }
-      
+    const success = await completeAppointment(id);
+    
+    if (success) {
       setAppointments(
         appointments.map((app) =>
           app.id === id ? { ...app, status: "completed" } : app
         )
       );
-      
-      toast.success("Đã đánh dấu hoàn thành lịch hẹn");
-      
-    } catch (error: any) {
-      console.error("Error completing appointment:", error);
-      toast.error(`Lỗi khi đánh dấu hoàn thành: ${error.message}`);
     }
   };
 
@@ -278,8 +173,8 @@ export const useAppointmentState = (selectedCustomer: any) => {
     editingAppointment,
     newAppointment,
     setNewAppointment,
-    handlePrevious,
-    handleNext,
+    handlePrevious: handleNavigatePrevious,
+    handleNext: handleNavigateNext,
     handleAddAppointment,
     handleDeleteAppointment,
     handleCompleteAppointment,
