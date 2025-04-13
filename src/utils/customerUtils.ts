@@ -67,7 +67,7 @@ export const importCustomers = async (
               weight: customer.weight || 0,
               goals: customer.goal || 'general-health',
               health_conditions: healthConditions,
-              user_id: session.user.id,
+              user_id: session.user.id, // Ensure user_id is set to the current user's ID
             });
         });
         

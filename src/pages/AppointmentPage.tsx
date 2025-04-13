@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -8,17 +9,50 @@ import { Button } from "@/components/ui/button";
 import { InfoIcon, UserCheck } from "lucide-react";
 import { Customer } from "@/types/customer";
 import AppointmentScheduler from "../components/appointments/AppointmentScheduler";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AppointmentPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Bạn cần đăng nhập để xem lịch hẹn");
+        navigate("/login");
+        return;
+      }
+      setIsAuthenticated(true);
+    };
+    
+    checkAuth();
+    
+    // Set up auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session && event === 'SIGNED_OUT') {
+        navigate("/login");
+      }
+      setIsAuthenticated(!!session);
+    });
+    
     // Lấy thông tin khách hàng đã chọn từ localStorage
     const storedCustomer = localStorage.getItem("selectedCustomer");
     if (storedCustomer) {
       setSelectedCustomer(JSON.parse(storedCustomer));
     }
-  }, []);
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  if (!isAuthenticated) {
+    return null; // Don't render anything until authentication check is done
+  }
 
   return (
     <Layout>

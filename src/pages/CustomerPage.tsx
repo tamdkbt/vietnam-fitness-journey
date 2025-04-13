@@ -1,5 +1,6 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
@@ -9,6 +10,7 @@ import EmptyCustomerState from "../components/customers/EmptyCustomerState";
 import CustomerPageHeader from "../components/customers/CustomerPageHeader";
 import CustomerFilters from "../components/customers/CustomerFilters";
 import { useCustomers } from "@/hooks/useCustomers";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   exportCustomers as exportCustomersUtil, 
   importCustomers as importCustomersUtil,
@@ -23,6 +25,8 @@ const CustomerPage = () => {
   const [goalFilter, setGoalFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
   
   const { 
     customers, 
@@ -31,6 +35,33 @@ const CustomerPage = () => {
     fetchCustomers,
     setCustomers
   } = useCustomers();
+
+  useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Bạn cần đăng nhập để xem danh sách khách hàng");
+        navigate("/login");
+        return;
+      }
+      setIsAuthenticated(true);
+    };
+    
+    checkAuth();
+    
+    // Set up auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session && event === 'SIGNED_OUT') {
+        navigate("/login");
+      }
+      setIsAuthenticated(!!session);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const exportCustomersHandler = () => {
     exportCustomersUtil(customers);
@@ -53,6 +84,10 @@ const CustomerPage = () => {
   filteredCustomers = filterCustomersByGoal(filteredCustomers, goalFilter);
   filteredCustomers = filterCustomersByGender(filteredCustomers, genderFilter);
   filteredCustomers = sortCustomers(filteredCustomers, sortBy);
+
+  if (!isAuthenticated) {
+    return null; // Don't render anything until authentication check is done
+  }
 
   return (
     <Layout>

@@ -12,6 +12,20 @@ export const useCustomers = () => {
     try {
       setLoading(true);
       
+      // Get the current authenticated user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw sessionError;
+      }
+      
+      // If user is not authenticated, return empty array
+      if (!sessionData.session) {
+        setCustomers([]);
+        return;
+      }
+      
+      // Only fetch customers that belong to the current user (RLS will enforce this)
       const { data, error } = await supabase
         .from('customers')
         .select('*');
