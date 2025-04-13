@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +29,6 @@ import {
 } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define MedicalHistory type
 export type MedicalHistory = {
   hasHeartIssues: boolean;
   hasDiabetes: boolean;
@@ -40,7 +38,6 @@ export type MedicalHistory = {
   otherConditions: string;
 };
 
-// Define Allergies type
 export type Allergies = {
   hasFoodAllergies: boolean;
   foodAllergies: string;
@@ -50,7 +47,6 @@ export type Allergies = {
   environmentalAllergies: string;
 };
 
-// Định nghĩa kiểu dữ liệu cho khách hàng
 export type Customer = {
   id: string;
   name: string;
@@ -77,7 +73,6 @@ const CustomerPage = () => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Fetch customers from Supabase when component loads
     fetchCustomers();
   }, []);
 
@@ -85,7 +80,6 @@ const CustomerPage = () => {
     try {
       setLoading(true);
       
-      // Fetch customers for the current authenticated user only
       const { data, error } = await supabase
         .from('customers')
         .select('*');
@@ -95,21 +89,20 @@ const CustomerPage = () => {
       }
       
       if (data) {
-        // Map Supabase data to our Customer type
         const formattedCustomers = data.map(customer => ({
           id: customer.id,
           name: customer.name,
           age: customer.age || 0,
-          gender: customer.gender || 'other',
+          gender: customer.email?.includes('@female') ? 'female' : 
+                  customer.email?.includes('@male') ? 'male' : 'other',
           height: customer.height || 0,
           weight: customer.weight || 0,
           goal: customer.goals || 'general-health',
-          activityLevel: customer.activity_level || 'moderate',
-          dietType: customer.diet_type || 'balanced',
-          dietDetails: customer.diet_details,
-          preferredTime: customer.preferred_time || 'morning',
+          activityLevel: 'moderate',
+          dietType: 'balanced',
+          dietDetails: '',
+          preferredTime: 'morning',
           createdAt: customer.created_at,
-          // Parse health conditions from JSON string if available
           medicalHistory: customer.health_conditions ? 
             JSON.parse(customer.health_conditions)?.medicalHistory || {
               hasHeartIssues: false,
@@ -126,7 +119,6 @@ const CustomerPage = () => {
               hasHighBloodPressure: false,
               otherConditions: ""
             },
-          // Parse allergies from JSON string if available
           allergies: customer.health_conditions ? 
             JSON.parse(customer.health_conditions)?.allergies || {
               hasFoodAllergies: false,
@@ -157,7 +149,6 @@ const CustomerPage = () => {
 
   const handleDeleteCustomer = async (id: string) => {
     try {
-      // Delete customer from Supabase
       const { error } = await supabase
         .from('customers')
         .delete()
@@ -167,7 +158,6 @@ const CustomerPage = () => {
         throw error;
       }
       
-      // Update local state after successful deletion
       setCustomers(customers.filter(customer => customer.id !== id));
       toast.success("Đã xóa khách hàng thành công");
     } catch (error: any) {
@@ -199,16 +189,13 @@ const CustomerPage = () => {
         const parsedData = JSON.parse(content);
         
         if (Array.isArray(parsedData)) {
-          // Get the current session to get the user ID
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) {
             toast.error("Bạn cần đăng nhập để nhập dữ liệu khách hàng");
             return;
           }
           
-          // Batch insert customers with the current user_id
           const customerPromises = parsedData.map(async (customer) => {
-            // Prepare health conditions as a JSON string
             const healthConditions = JSON.stringify({
               medicalHistory: customer.medicalHistory || {
                 hasHeartIssues: false,
@@ -233,23 +220,19 @@ const CustomerPage = () => {
               .insert({
                 name: customer.name,
                 age: customer.age || 0,
-                gender: customer.gender || 'other',
+                email: customer.gender === 'female' ? 'customer@female.com' : 
+                       customer.gender === 'male' ? 'customer@male.com' : 
+                       'customer@other.com',
                 height: customer.height || 0,
                 weight: customer.weight || 0,
                 goals: customer.goal || 'general-health',
-                activity_level: customer.activityLevel || 'moderate',
-                diet_type: customer.dietType || 'balanced',
-                diet_details: customer.dietDetails || '',
-                preferred_time: customer.preferredTime || 'morning',
                 health_conditions: healthConditions,
-                user_id: session.user.id, // Important: associate with the current user
+                user_id: session.user.id,
               });
           });
           
-          // Wait for all insert operations to complete
           await Promise.all(customerPromises);
           
-          // Refresh the customer list
           fetchCustomers();
           toast.success("Đã nhập dữ liệu khách hàng thành công");
         } else {
@@ -261,7 +244,6 @@ const CustomerPage = () => {
       }
     };
     
-    // Reset input value to allow the same file to be selected again
     event.target.value = "";
   };
 
