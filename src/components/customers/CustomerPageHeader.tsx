@@ -3,7 +3,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Users, FileUp, FileDown } from "lucide-react";
-import { Customer } from "@/types/customer";
 
 interface CustomerPageHeaderProps {
   customersCount: number;
@@ -25,7 +24,7 @@ const CustomerPageHeader: React.FC<CustomerPageHeaderProps> = ({
         </p>
       </div>
       <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-        <Link to="/customer/new">
+        <Link to="/dashboard">
           <Button size="sm" className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             Thêm khách hàng
