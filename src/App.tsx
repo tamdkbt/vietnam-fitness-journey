@@ -14,6 +14,7 @@ import WorkoutPage from "./pages/WorkoutPage";
 import MealPage from "./pages/MealPage";
 import CustomerPage from "./pages/CustomerPage";
 import NotFound from "./pages/NotFound";
+import RequireAuth from "./components/RequireAuth";
 
 const queryClient = new QueryClient();
 
@@ -25,14 +26,17 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/dashboard" element={<Index />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
-          <Route path="/appointments" element={<AppointmentPage />} />
-          <Route path="/workouts" element={<WorkoutPage />} />
-          <Route path="/meals" element={<MealPage />} />
-          <Route path="/customers" element={<CustomerPage />} />
+          
+          {/* Protected routes */}
+          <Route path="/dashboard" element={<RequireAuth><Index /></RequireAuth>} />
+          <Route path="/appointments" element={<RequireAuth><AppointmentPage /></RequireAuth>} />
+          <Route path="/workouts" element={<RequireAuth><WorkoutPage /></RequireAuth>} />
+          <Route path="/meals" element={<RequireAuth><MealPage /></RequireAuth>} />
+          <Route path="/customers" element={<RequireAuth><CustomerPage /></RequireAuth>} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -28,6 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define MedicalHistory type
 export type MedicalHistory = {
@@ -73,20 +74,51 @@ const CustomerPage = () => {
   const [goalFilter, setGoalFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name");
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Lấy danh sách khách hàng từ localStorage
-    const storedCustomers = localStorage.getItem("customers");
-    if (storedCustomers) {
-      try {
-        const parsedCustomers = JSON.parse(storedCustomers);
-        
-        // Ensure each customer has the required fields
-        const validatedCustomers = parsedCustomers.map((customer: any) => {
-          return {
-            ...customer,
-            // Ensure medicalHistory exists with default values if needed
-            medicalHistory: customer.medicalHistory || {
+    // Fetch customers from Supabase when component loads
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch customers for the current authenticated user only
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        // Map Supabase data to our Customer type
+        const formattedCustomers = data.map(customer => ({
+          id: customer.id,
+          name: customer.name,
+          age: customer.age || 0,
+          gender: customer.gender || 'other',
+          height: customer.height || 0,
+          weight: customer.weight || 0,
+          goal: customer.goals || 'general-health',
+          activityLevel: customer.activity_level || 'moderate',
+          dietType: customer.diet_type || 'balanced',
+          dietDetails: customer.diet_details,
+          preferredTime: customer.preferred_time || 'morning',
+          createdAt: customer.created_at,
+          // Parse health conditions from JSON string if available
+          medicalHistory: customer.health_conditions ? 
+            JSON.parse(customer.health_conditions)?.medicalHistory || {
+              hasHeartIssues: false,
+              hasDiabetes: false,
+              hasAsthma: false,
+              hasArthritis: false,
+              hasHighBloodPressure: false,
+              otherConditions: ""
+            } : {
               hasHeartIssues: false,
               hasDiabetes: false,
               hasAsthma: false,
@@ -94,8 +126,16 @@ const CustomerPage = () => {
               hasHighBloodPressure: false,
               otherConditions: ""
             },
-            // Ensure allergies exists with default values if needed
-            allergies: customer.allergies || {
+          // Parse allergies from JSON string if available
+          allergies: customer.health_conditions ? 
+            JSON.parse(customer.health_conditions)?.allergies || {
+              hasFoodAllergies: false,
+              foodAllergies: "",
+              hasMedicationAllergies: false,
+              medicationAllergies: "",
+              hasEnvironmentalAllergies: false,
+              environmentalAllergies: ""
+            } : {
               hasFoodAllergies: false,
               foodAllergies: "",
               hasMedicationAllergies: false,
@@ -103,25 +143,37 @@ const CustomerPage = () => {
               hasEnvironmentalAllergies: false,
               environmentalAllergies: ""
             }
-          };
-        });
+        }));
         
-        setCustomers(validatedCustomers);
-        
-        // Update localStorage with the validated customers
-        localStorage.setItem("customers", JSON.stringify(validatedCustomers));
-      } catch (error) {
-        console.error("Error parsing customers:", error);
-        setCustomers([]);
+        setCustomers(formattedCustomers);
       }
+    } catch (error: any) {
+      toast.error(`Lỗi khi tải danh sách khách hàng: ${error.message}`);
+      console.error("Error fetching customers:", error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
-  const handleDeleteCustomer = (id: string) => {
-    const updatedCustomers = customers.filter(customer => customer.id !== id);
-    setCustomers(updatedCustomers);
-    localStorage.setItem("customers", JSON.stringify(updatedCustomers));
-    toast.success("Đã xóa khách hàng thành công");
+  const handleDeleteCustomer = async (id: string) => {
+    try {
+      // Delete customer from Supabase
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update local state after successful deletion
+      setCustomers(customers.filter(customer => customer.id !== id));
+      toast.success("Đã xóa khách hàng thành công");
+    } catch (error: any) {
+      toast.error(`Lỗi khi xóa khách hàng: ${error.message}`);
+      console.error("Error deleting customer:", error);
+    }
   };
 
   const exportCustomers = () => {
@@ -138,20 +190,26 @@ const CustomerPage = () => {
     toast.success("Đã xuất dữ liệu khách hàng thành công");
   };
 
-  const importCustomers = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const importCustomers = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
     fileReader.readAsText(event.target.files?.[0] as File, "UTF-8");
-    fileReader.onload = e => {
+    fileReader.onload = async (e) => {
       try {
         const content = e.target?.result as string;
         const parsedData = JSON.parse(content);
         
         if (Array.isArray(parsedData)) {
-          // Validate and ensure required fields exist
-          const validatedCustomers = parsedData.map((customer: any) => {
-            return {
-              ...customer,
-              // Ensure medicalHistory exists with default values if needed
+          // Get the current session to get the user ID
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            toast.error("Bạn cần đăng nhập để nhập dữ liệu khách hàng");
+            return;
+          }
+          
+          // Batch insert customers with the current user_id
+          const customerPromises = parsedData.map(async (customer) => {
+            // Prepare health conditions as a JSON string
+            const healthConditions = JSON.stringify({
               medicalHistory: customer.medicalHistory || {
                 hasHeartIssues: false,
                 hasDiabetes: false,
@@ -160,7 +218,6 @@ const CustomerPage = () => {
                 hasHighBloodPressure: false,
                 otherConditions: ""
               },
-              // Ensure allergies exists with default values if needed
               allergies: customer.allergies || {
                 hasFoodAllergies: false,
                 foodAllergies: "",
@@ -169,17 +226,38 @@ const CustomerPage = () => {
                 hasEnvironmentalAllergies: false,
                 environmentalAllergies: ""
               }
-            };
+            });
+            
+            return supabase
+              .from('customers')
+              .insert({
+                name: customer.name,
+                age: customer.age || 0,
+                gender: customer.gender || 'other',
+                height: customer.height || 0,
+                weight: customer.weight || 0,
+                goals: customer.goal || 'general-health',
+                activity_level: customer.activityLevel || 'moderate',
+                diet_type: customer.dietType || 'balanced',
+                diet_details: customer.dietDetails || '',
+                preferred_time: customer.preferredTime || 'morning',
+                health_conditions: healthConditions,
+                user_id: session.user.id, // Important: associate with the current user
+              });
           });
           
-          setCustomers(validatedCustomers);
-          localStorage.setItem("customers", JSON.stringify(validatedCustomers));
+          // Wait for all insert operations to complete
+          await Promise.all(customerPromises);
+          
+          // Refresh the customer list
+          fetchCustomers();
           toast.success("Đã nhập dữ liệu khách hàng thành công");
         } else {
           toast.error("Định dạng tệp không hợp lệ");
         }
-      } catch (error) {
-        toast.error("Lỗi khi đọc tệp");
+      } catch (error: any) {
+        toast.error(`Lỗi khi đọc tệp: ${error.message}`);
+        console.error("Error importing customers:", error);
       }
     };
     
@@ -206,7 +284,7 @@ const CustomerPage = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-            <Link to="/">
+            <Link to="/customer/new">
               <Button size="sm" className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
                 Thêm khách hàng
@@ -258,7 +336,11 @@ const CustomerPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {customers.length > 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : customers.length > 0 ? (
               <>
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-4">
                   <div className="w-full md:w-1/3">
