@@ -51,7 +51,7 @@ export const fetchAppointments = async (selectedCustomer: any = null) => {
         id: app.id,
         date: new Date(app.date),
         time: app.time,
-        name: selectedCustomer?.name || app.customer_name || 'Chưa chọn khách hàng',
+        name: selectedCustomer?.name || 'Chưa chọn khách hàng',
         type: app.type,
         status: (app.status || 'scheduled') as AppointmentStatus,
       }));
@@ -98,7 +98,6 @@ export const addAppointment = async (
         date: formattedDate,
         time: newAppointment.time,
         customer_id: selectedCustomer.id,
-        customer_name: selectedCustomer.name, // Store customer name for reference
         type: newAppointment.type,
         user_id: sessionData.session.user.id,
         notes: "",
@@ -152,7 +151,6 @@ export const updateAppointment = async (
       .update({
         time: newAppointment.time,
         customer_id: selectedCustomer.id,
-        customer_name: selectedCustomer.name,
         type: newAppointment.type,
         notes: "",
         status: 'scheduled'
