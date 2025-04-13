@@ -8,8 +8,9 @@ import {
   updateAppointment,
   deleteAppointment,
   completeAppointment,
-  AppointmentDB
 } from './appointments';
+
+import type { AppointmentDB } from './appointments/types';
 
 export {
   fetchAppointments,
@@ -17,5 +18,6 @@ export {
   updateAppointment,
   deleteAppointment,
   completeAppointment,
-  AppointmentDB
 };
+
+export type { AppointmentDB };
