@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +17,8 @@ import {
   LogOut,
   UsersRound
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,10 +26,23 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => {
     return currentPath === path;
+  };
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast.success("Đăng xuất thành công");
+      navigate("/login");
+    } catch (error: any) {
+      toast.error(error.message || "Đăng xuất thất bại. Vui lòng thử lại.");
+    }
   };
 
   const navigationItems = [
@@ -38,7 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     },
     {
       name: "Hồ sơ",
-      path: "/",
+      path: "/dashboard", // Đổi đường dẫn từ "/" thành "/dashboard"
       icon: <User className="h-5 w-5" />,
     },
     {
@@ -79,6 +94,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </Link>
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-500">
+                <LogOut className="h-5 w-5" />
+                Đăng xuất
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -108,7 +127,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             ))}
           </nav>
           <div className="p-4 border-t">
-            <Button variant="ghost" className="w-full justify-start text-gray-500">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-gray-500 hover:text-red-500"
+              onClick={handleLogout}
+            >
               <LogOut className="h-5 w-5 mr-3" />
               Đăng xuất
             </Button>
