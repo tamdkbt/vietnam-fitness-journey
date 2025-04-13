@@ -4,13 +4,12 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { InfoIcon, UserCheck } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import { Customer } from "@/types/customer";
 import AppointmentScheduler from "../components/appointments/AppointmentScheduler";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import CustomerSelector from "../components/appointments/CustomerSelector";
 
 const AppointmentPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -39,7 +38,7 @@ const AppointmentPage = () => {
       setIsAuthenticated(!!session);
     });
     
-    // Lấy thông tin khách hàng đã chọn từ localStorage
+    // Get selected customer from localStorage
     const storedCustomer = localStorage.getItem("selectedCustomer");
     if (storedCustomer) {
       setSelectedCustomer(JSON.parse(storedCustomer));
@@ -49,6 +48,12 @@ const AppointmentPage = () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
+
+  const handleCustomerSelect = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    localStorage.setItem("selectedCustomer", JSON.stringify(customer));
+    toast.success(`Đã chọn khách hàng ${customer.name}`);
+  };
 
   if (!isAuthenticated) {
     return null; // Don't render anything until authentication check is done
@@ -64,44 +69,24 @@ const AppointmentPage = () => {
           </p>
         </div>
         
-        {selectedCustomer && (
-          <Card className="mb-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-primary" />
-                Khách hàng đang được chọn
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{selectedCustomer.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {selectedCustomer.age} tuổi, {selectedCustomer.height}cm, {selectedCustomer.weight}kg
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Mục tiêu: {selectedCustomer.goal === "weight-loss" ? "Giảm cân" : 
-                              selectedCustomer.goal === "muscle-gain" ? "Tăng cơ" :
-                              selectedCustomer.goal === "general-health" ? "Sức khỏe chung" : "Nâng cao thể lực"}
-                  </p>
-                </div>
-                <Link to="/customers">
-                  <Button variant="outline" size="sm">Chọn khách hàng khác</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Khách hàng</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CustomerSelector
+              selectedCustomer={selectedCustomer}
+              onCustomerSelect={handleCustomerSelect}
+            />
+          </CardContent>
+        </Card>
         
         {!selectedCustomer && (
           <Alert className="mb-6">
             <InfoIcon className="h-4 w-4" />
             <AlertTitle>Chưa chọn khách hàng</AlertTitle>
-            <AlertDescription className="flex items-center justify-between">
-              <span>Hãy chọn một khách hàng từ danh sách để tạo lịch hẹn</span>
-              <Link to="/customers">
-                <Button size="sm">Đi đến danh sách khách hàng</Button>
-              </Link>
+            <AlertDescription>
+              Hãy chọn một khách hàng từ danh sách để tạo lịch hẹn
             </AlertDescription>
           </Alert>
         )}

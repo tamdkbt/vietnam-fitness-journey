@@ -1,3 +1,4 @@
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { format, getDay } from "date-fns";
@@ -5,7 +6,7 @@ import { vi } from "date-fns/locale";
 import { startOfMonth } from "date-fns";
 import { Appointment } from "../../types/appointment";
 import { checkIsToday, formatDate, getAppointmentsForDay } from "../../utils/dateUtils";
-import { UserCheck, Check } from "lucide-react";
+import { UserCheck, Check, Dumbbell, Users, Apple } from "lucide-react";
 import { appointmentTypeNameById } from "../../utils/appointmentUtils";
 
 interface MonthlyViewProps {
@@ -49,21 +50,45 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
     }
   };
 
+  // Get icon for appointment type
+  const getAppointmentTypeIcon = (type: string) => {
+    switch(type) {
+      case "consultation": return <UserCheck className="h-2.5 w-2.5 mr-1" />;
+      case "personal_training": return <Dumbbell className="h-2.5 w-2.5 mr-1" />;
+      case "nutrition": return <Apple className="h-2.5 w-2.5 mr-1" />;
+      case "group_class": return <Users className="h-2.5 w-2.5 mr-1" />;
+      default: return <UserCheck className="h-2.5 w-2.5 mr-1" />;
+    }
+  };
+
+  // Get color for appointment type
+  const getAppointmentColor = (type: string, status: string) => {
+    if (status === "completed") {
+      return "bg-gray-100 text-gray-700";
+    }
+    
+    switch(type) {
+      case "consultation": return "bg-purple-50 text-purple-700";
+      case "personal_training": return "bg-blue-50 text-blue-700";
+      case "nutrition": return "bg-green-50 text-green-700";
+      case "group_class": return "bg-orange-50 text-orange-700";
+      default: return "bg-primary/10 text-primary";
+    }
+  };
+
   const defaultRenderAppointment = (appointment: Appointment) => (
     <div
       className={cn(
         "text-xs p-1.5 mb-1 rounded",
-        appointment.status === "completed"
-          ? "bg-gray-200 text-gray-700"
-          : "bg-primary/10 text-primary"
+        getAppointmentColor(appointment.type, appointment.status)
       )}
     >
       <div className="font-medium truncate flex justify-between">
         <span>{appointment.time}</span>
-        <span>{appointment.name}</span>
+        <span className="truncate max-w-[80px]">{appointment.name}</span>
       </div>
       <div className="text-[10px] flex items-center mt-1 truncate">
-        <UserCheck className="h-2.5 w-2.5 mr-1" />
+        {getAppointmentTypeIcon(appointment.type)}
         <span className="truncate">{appointmentTypeNameById(appointment.type)}</span>
       </div>
       {appointment.status === "completed" && (

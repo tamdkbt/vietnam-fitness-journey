@@ -1,7 +1,9 @@
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Select, 
   SelectContent, 
@@ -12,7 +14,7 @@ import {
 import {
   DialogFooter,
 } from "@/components/ui/dialog";
-import { X, Check } from "lucide-react";
+import { X, Check, AlarmClock, User, Dumbbell, FileText } from "lucide-react";
 import { APPOINTMENT_TYPES, HOURS, Appointment } from "../../types/appointment";
 import { Customer } from "@/types/customer";
 
@@ -48,17 +50,19 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   return (
     <>
       <div className="grid gap-4 py-4">
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="time" className="text-right">
-            Thời gian
-          </Label>
+        <div className="flex items-center gap-2">
+          <AlarmClock className="w-4 h-4 text-primary" />
+          <Label className="font-medium">Thời gian buổi hẹn</Label>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-4">
           <Select
             value={newAppointment.time}
             onValueChange={(value) =>
               setNewAppointment({ ...newAppointment, time: value })
             }
           >
-            <SelectTrigger className="col-span-3">
+            <SelectTrigger>
               <SelectValue placeholder="Chọn giờ" />
             </SelectTrigger>
             <SelectContent>
@@ -70,40 +74,50 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="name" className="text-right">
-            Tên khách hàng
-          </Label>
+        
+        <div className="flex items-center gap-2 mt-2">
+          <User className="w-4 h-4 text-primary" />
+          <Label className="font-medium">Thông tin khách hàng</Label>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-4">
           {selectedCustomer ? (
-            <Input
-              id="name"
-              value={selectedCustomer.name}
-              className="col-span-3 bg-gray-50"
-              readOnly
-            />
+            <div className="p-3 border rounded-md bg-gray-50 space-y-1">
+              <p className="font-medium">{selectedCustomer.name}</p>
+              <p className="text-sm text-gray-600">
+                {selectedCustomer.age} tuổi, {selectedCustomer.height}cm, {selectedCustomer.weight}kg
+              </p>
+              <p className="text-sm text-gray-600">
+                Mục tiêu: {selectedCustomer.goal === "weight-loss" ? "Giảm cân" : 
+                        selectedCustomer.goal === "muscle-gain" ? "Tăng cơ" :
+                        selectedCustomer.goal === "general-health" ? "Sức khỏe chung" : "Nâng cao thể lực"}
+              </p>
+            </div>
           ) : (
             <Input
-              id="name"
               value={newAppointment.name}
               onChange={(e) =>
                 setNewAppointment({ ...newAppointment, name: e.target.value })
               }
-              className="col-span-3"
+              placeholder="Nhập tên khách hàng"
             />
           )}
         </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="type" className="text-right">
-            Loại dịch vụ
-          </Label>
+        
+        <div className="flex items-center gap-2 mt-2">
+          <Dumbbell className="w-4 h-4 text-primary" />
+          <Label className="font-medium">Loại buổi tập</Label>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-4">
           <Select
             value={newAppointment.type}
             onValueChange={(value) =>
               setNewAppointment({ ...newAppointment, type: value })
             }
           >
-            <SelectTrigger className="col-span-3">
-              <SelectValue placeholder="Chọn loại dịch vụ" />
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn loại buổi tập" />
             </SelectTrigger>
             <SelectContent>
               {APPOINTMENT_TYPES.map((type) => (
@@ -114,7 +128,19 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
             </SelectContent>
           </Select>
         </div>
+        
+        <div className="flex items-center gap-2 mt-2">
+          <FileText className="w-4 h-4 text-primary" />
+          <Label className="font-medium">Ghi chú (tùy chọn)</Label>
+        </div>
+        
+        <Textarea 
+          placeholder="Thêm ghi chú cho buổi hẹn này..." 
+          className="resize-none"
+          rows={3}
+        />
       </div>
+      
       <DialogFooter className="flex justify-between">
         {editingAppointment && (
           <div className="flex gap-2">
