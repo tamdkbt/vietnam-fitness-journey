@@ -34,5 +34,3 @@ export const AppointmentUtils: React.FC<AppointmentUtilsProps> = ({ customer }) 
     </div>
   );
 };
-
-// Export as named export only, no default export
