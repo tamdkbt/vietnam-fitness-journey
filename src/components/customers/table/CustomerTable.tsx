@@ -9,6 +9,7 @@ import CustomerTableHeader from "./CustomerTableHeader";
 import CustomerRow from "./CustomerRow";
 import ExpandedCustomerDetails from "./ExpandedCustomerDetails";
 import EmptyCustomerList from "./EmptyCustomerList";
+import { AppointmentType } from "./details/AppointmentUtils";
 
 interface CustomerTableProps {
   customers: Customer[];
