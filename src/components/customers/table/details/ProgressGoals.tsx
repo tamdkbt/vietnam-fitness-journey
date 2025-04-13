@@ -1,8 +1,13 @@
 
 import React from "react";
 import { Activity } from "lucide-react";
+import { Customer } from "@/types/customer";
 
-const ProgressGoals: React.FC = () => {
+interface ProgressGoalsProps {
+  customer: Customer;
+}
+
+const ProgressGoals: React.FC<ProgressGoalsProps> = ({ customer }) => {
   return (
     <div className="bg-white rounded-lg p-4 border">
       <div className="flex items-center mb-3">
