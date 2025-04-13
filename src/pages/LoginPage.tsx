@@ -5,16 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Facebook, Mail, AlertCircle } from "lucide-react";
+import { ArrowRight, Facebook, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -26,7 +24,6 @@ const LoginPage = () => {
     }
     
     setIsLoading(true);
-    setLoginError("");
     
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -41,7 +38,6 @@ const LoginPage = () => {
       toast.success("Đăng nhập thành công");
       navigate("/");
     } catch (error: any) {
-      setLoginError(error.message || "Đăng nhập thất bại. Vui lòng thử lại.");
       toast.error(error.message || "Đăng nhập thất bại. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
@@ -82,44 +78,6 @@ const LoginPage = () => {
     }
   };
   
-  const createDemoAccount = async () => {
-    setIsLoading(true);
-    setLoginError("");
-    
-    const demoEmail = "demo@fitcoachpro.com";
-    const demoPassword = "FitCoach2024!";
-    
-    try {
-      // Thử đăng ký tài khoản mới
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: demoEmail,
-        password: demoPassword,
-      });
-      
-      if (signUpError && signUpError.message !== "User already registered") {
-        throw signUpError;
-      }
-      
-      // Sau khi đăng ký hoặc nếu tài khoản đã tồn tại, thử đăng nhập
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: demoEmail,
-        password: demoPassword,
-      });
-      
-      if (signInError) {
-        throw signInError;
-      }
-      
-      toast.success("Đăng nhập tài khoản demo thành công");
-      navigate("/");
-    } catch (error: any) {
-      setLoginError(error.message || "Không thể tạo tài khoản demo. Vui lòng thử lại.");
-      toast.error(error.message || "Không thể tạo tài khoản demo. Vui lòng thử lại.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
@@ -141,13 +99,6 @@ const LoginPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loginError && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{loginError}</AlertDescription>
-              </Alert>
-            )}
-            
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -183,17 +134,6 @@ const LoginPage = () => {
                 {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>
             </form>
-            
-            <div className="mt-4">
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={createDemoAccount}
-                disabled={isLoading}
-              >
-                {isLoading ? "Đang xử lý..." : "Tạo tài khoản demo"}
-              </Button>
-            </div>
             
             <div className="mt-6">
               <div className="relative">
