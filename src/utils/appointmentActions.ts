@@ -36,7 +36,7 @@ export const fetchAppointments = async (selectedCustomer: any = null) => {
         id: app.id,
         date: new Date(app.date),
         time: app.time,
-        name: selectedCustomer?.name || 'Chưa chọn khách hàng',
+        name: selectedCustomer?.name || app.customer_name || 'Chưa chọn khách hàng',
         type: app.type,
         status: (app.status || 'scheduled') as AppointmentStatus,
       }));
@@ -69,6 +69,11 @@ export const addAppointment = async (
       return null;
     }
 
+    if (!selectedCustomer?.id) {
+      toast.error("Vui lòng chọn khách hàng trước khi đặt lịch");
+      return null;
+    }
+
     // Format date as YYYY-MM-DD
     const formattedDate = selectedDate.toISOString().split('T')[0];
     
@@ -77,7 +82,8 @@ export const addAppointment = async (
       .insert({
         date: formattedDate,
         time: newAppointment.time,
-        customer_id: selectedCustomer ? selectedCustomer.id : null,
+        customer_id: selectedCustomer.id,
+        customer_name: selectedCustomer.name, // Store customer name for reference
         type: newAppointment.type,
         user_id: sessionData.session.user.id,
         notes: "",
@@ -94,7 +100,7 @@ export const addAppointment = async (
         id: data[0].id,
         date: selectedDate,
         time: newAppointment.time,
-        name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
+        name: selectedCustomer.name,
         type: newAppointment.type,
         status: "scheduled",
       };
@@ -121,11 +127,17 @@ export const updateAppointment = async (
   selectedCustomer: any
 ) => {
   try {
+    if (!selectedCustomer?.id) {
+      toast.error("Vui lòng chọn khách hàng trước khi cập nhật lịch");
+      return null;
+    }
+
     const { error } = await supabase
       .from('appointments')
       .update({
         time: newAppointment.time,
-        customer_id: selectedCustomer ? selectedCustomer.id : null,
+        customer_id: selectedCustomer.id,
+        customer_name: selectedCustomer.name,
         type: newAppointment.type,
         notes: "",
         status: 'scheduled'
@@ -140,7 +152,7 @@ export const updateAppointment = async (
     const updatedAppointment: Appointment = {
       ...editingAppointment,
       time: newAppointment.time,
-      name: selectedCustomer ? selectedCustomer.name : newAppointment.name,
+      name: selectedCustomer.name,
       type: newAppointment.type,
       status: "scheduled",
     };
