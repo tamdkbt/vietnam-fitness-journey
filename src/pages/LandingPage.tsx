@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import heroImage from "@/assets/hero-fitness.jpg";
+import heroImage from "../assets/hero-fitness1.jpg";
 
 const LandingPage = () => {
   const [activeSection, setActiveSection] = useState<string>("survey");
@@ -103,7 +102,7 @@ const LandingPage = () => {
         <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
           <img
             className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
-            src={heroImage}
+            src="https://lovable.dev/lovable-uploads/e445641d-1e32-4022-ac34-7336bb2ef070.png"
             alt="Person exercising"
           />
         </div>
