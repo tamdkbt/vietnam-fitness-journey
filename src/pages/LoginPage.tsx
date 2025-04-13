@@ -36,7 +36,7 @@ const LoginPage = () => {
       }
       
       toast.success("Đăng nhập thành công");
-      navigate("/");
+      navigate("/dashboard"); // Chuyển hướng đến trang dashboard thay vì trang chủ
     } catch (error: any) {
       toast.error(error.message || "Đăng nhập thất bại. Vui lòng thử lại.");
     } finally {

@@ -17,7 +17,7 @@ const AuthCallbackPage = () => {
       }
       
       if (data?.session) {
-        navigate("/");
+        navigate("/dashboard"); // Chuyển hướng đến trang dashboard thay vì trang chủ
       } else {
         navigate("/login");
       }
