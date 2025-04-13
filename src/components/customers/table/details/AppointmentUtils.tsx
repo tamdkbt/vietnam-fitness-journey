@@ -28,11 +28,12 @@ export const AppointmentUtils: React.FC<AppointmentUtilsProps> = ({ customer }) 
         <span className="flex items-center">
           <Clock className="mr-1 h-3 w-3" />
           Thời gian tập luyện: {customer.preferredTime === 'morning' ? 'Buổi sáng' : 
-                               customer.preferredTime === 'afternoon' ? 'Buổi chiều' : 'Buổi tối'}
+                              customer.preferredTime === 'afternoon' ? 'Buổi chiều' : 'Buổi tối'}
         </span>
       </div>
     </div>
   );
 };
 
-export default AppointmentUtils;
+// Remove the default export to avoid confusion
+// export default AppointmentUtils;
