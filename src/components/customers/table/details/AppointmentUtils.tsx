@@ -1,39 +1,38 @@
 
-import { format, isAfter, isBefore, parseISO } from "date-fns";
-import { vi } from "date-fns/locale";
+import React from "react";
+import { Customer } from "@/types/customer";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export interface AppointmentType {
-  id: string;
-  customerId: string;
-  date: string;
-  time: string;
-  type: string;
+interface AppointmentUtilsProps {
+  customer: Customer;
 }
 
-export const formatDateTime = (date: string, time: string) => {
-  return `${format(parseISO(date), "dd/MM/yyyy", { locale: vi })} - ${time}`;
-};
-
-export const getAppointmentTypeLabel = (type: string) => {
-  switch (type) {
-    case "consultation": return "Tư vấn";
-    case "personal_training": return "Tập cá nhân";
-    case "nutrition": return "Tư vấn dinh dưỡng";
-    case "group_class": return "Lớp học nhóm";
-    default: return type;
-  }
-};
-
-export const getUpcomingAppointments = (appointments: AppointmentType[], customerId: string) => {
-  const today = new Date();
-  return appointments.filter(app => 
-    app.customerId === customerId && isAfter(parseISO(app.date), today)
+export const AppointmentUtils: React.FC<AppointmentUtilsProps> = ({ customer }) => {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium">Lịch hẹn sắp tới</h3>
+      <div className="rounded-md border p-4 text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Khách hàng này chưa có lịch hẹn sắp tới
+        </p>
+        <Link to="/appointments">
+          <Button size="sm" className="mt-2">
+            <Calendar className="mr-2 h-4 w-4" />
+            Đặt lịch hẹn
+          </Button>
+        </Link>
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+        <span className="flex items-center">
+          <Clock className="mr-1 h-3 w-3" />
+          Thời gian tập luyện: {customer.preferredTime === 'morning' ? 'Buổi sáng' : 
+                               customer.preferredTime === 'afternoon' ? 'Buổi chiều' : 'Buổi tối'}
+        </span>
+      </div>
+    </div>
   );
 };
 
-export const getPastAppointments = (appointments: AppointmentType[], customerId: string) => {
-  const today = new Date();
-  return appointments.filter(app => 
-    app.customerId === customerId && isBefore(parseISO(app.date), today)
-  );
-};
+export default AppointmentUtils;
