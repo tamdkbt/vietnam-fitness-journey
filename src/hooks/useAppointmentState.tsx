@@ -8,7 +8,7 @@ import {
   updateAppointment,
   deleteAppointment,
   completeAppointment
-} from "../utils/appointmentActions";
+} from "../utils/appointments";
 import { handleNext, handlePrevious } from "../utils/appointmentDateUtils";
 
 export const useAppointmentState = (selectedCustomer: any) => {
