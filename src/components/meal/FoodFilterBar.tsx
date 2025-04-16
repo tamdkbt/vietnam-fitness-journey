@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { FOOD_CATEGORIES } from "@/types/meal";
+import { FOOD_CATEGORIES } from "@/constants/mealConstants";
 
 interface FoodFilterBarProps {
   selectedCategory: string;

@@ -9,7 +9,8 @@ import FoodList from "./FoodList";
 import FoodFilterBar from "./FoodFilterBar";
 import FoodDetailsModal from "./FoodDetailsModal";
 import { calculateDailyNutrition } from "@/utils/mealUtils";
-import { Meal, DAYS, FOODS, FoodItem } from "@/types/meal";
+import { Meal, FoodItem } from "@/types/mealTypes";
+import { DAYS, FOODS } from "@/types/meal";
 import { toast } from "sonner";
 
 interface DayMealListProps {

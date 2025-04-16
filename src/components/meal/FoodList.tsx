@@ -1,11 +1,11 @@
-
 import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Apple } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FOOD_CATEGORIES, FoodItem } from "@/types/meal";
+import { FOOD_CATEGORIES } from "@/constants/mealConstants";
+import { FoodItem } from "@/types/mealTypes";
 
 interface FoodListProps {
   foods: FoodItem[];

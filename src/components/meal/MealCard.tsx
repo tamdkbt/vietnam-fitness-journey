@@ -2,7 +2,8 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FoodItem, Meal, FOODS, MEAL_TYPES } from "@/types/meal";
+import { Meal } from "@/types/mealTypes";
+import { FOODS, MEAL_TYPES } from "@/types/meal";
 import { Coffee, Utensils, Pizza, Apple } from "lucide-react";
 import { getMealIcon } from "@/utils/mealUtils";
 
