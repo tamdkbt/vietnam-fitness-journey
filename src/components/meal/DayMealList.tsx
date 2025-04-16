@@ -1,8 +1,9 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Plus, Utensils, Check } from "lucide-react";
+import { Plus, Utensils, Check, Search, Filter } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import MealCard from "./MealCard";
 import NutritionOverview from "./NutritionOverview";
 import FoodList from "./FoodList";
@@ -41,6 +42,9 @@ const DayMealList: React.FC<DayMealListProps> = ({
     if (searchQuery) {
       return food.name.toLowerCase().includes(searchQuery.toLowerCase());
     }
+    if (selectedCategory !== "all") {
+      return food.category === selectedCategory;
+    }
     return true;
   });
 
@@ -64,19 +68,38 @@ const DayMealList: React.FC<DayMealListProps> = ({
           <MealCard key={meal.id} meal={meal} />
         ))}
       
-      <div className="flex justify-center mt-4">
-        <Button variant="outline" onClick={() => setIsAddingFood(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm món ăn
-        </Button>
-      </div>
-
-      <Sheet open={isAddingFood} onOpenChange={setIsAddingFood}>
-        <SheetContent side="right" className="w-full sm:w-[540px]">
-          <SheetHeader>
-            <SheetTitle>Thêm món ăn</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <Utensils className="h-5 w-5" />
+            Danh sách món ăn
+          </CardTitle>
+          <CardDescription>
+            Danh sách các món ăn có sẵn. Chọn món ăn để thêm vào lịch.
+          </CardDescription>
+          <div className="flex items-center gap-4 mt-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Tìm món ăn..."
+                  className="pl-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <Button variant="outline" size="icon" className="shrink-0">
+              <Filter className="h-4 w-4" />
+            </Button>
+            <Button className="shrink-0">
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm món ăn mới
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mt-4">
             <FoodFilterBar
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
@@ -89,8 +112,8 @@ const DayMealList: React.FC<DayMealListProps> = ({
               onAddToMeal={(foodId) => handleAddFoodToMeal(foodId, 100)}
             />
           </div>
-        </SheetContent>
-      </Sheet>
+        </CardContent>
+      </Card>
 
       <FoodDetailsModal
         food={selectedFood}
