@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import MealPlanBuilder from "../components/MealPlanBuilder";
 import Layout from "../components/Layout";
@@ -7,9 +8,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { InfoIcon, UserCheck } from "lucide-react";
 import { Customer } from "@/types/customer";
+import ViewSwitcher from "@/components/workout/ViewSwitcher";
+import { WorkoutView } from "@/types/workout";
 
 const MealPage = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [currentView, setCurrentView] = useState<WorkoutView>("week");
 
   useEffect(() => {
     // Lấy thông tin khách hàng đã chọn từ localStorage
@@ -22,11 +26,14 @@ const MealPage = () => {
   return (
     <Layout>
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Kế hoạch dinh dưỡng</h1>
-          <p className="text-gray-600">
-            Lập kế hoạch dinh dưỡng hàng ngày phù hợp với mục tiêu của bạn
-          </p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Kế hoạch dinh dưỡng</h1>
+            <p className="text-gray-600">
+              Lập kế hoạch dinh dưỡng hàng ngày phù hợp với mục tiêu của bạn
+            </p>
+          </div>
+          <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
         </div>
         
         {selectedCustomer && (
@@ -71,8 +78,11 @@ const MealPage = () => {
           </Alert>
         )}
         
-        {/* Passing the selectedCustomer as a key to force re-render when customer changes */}
-        <MealPlanBuilder key={selectedCustomer?.id} />
+        {/* Passing the currentView to MealPlanBuilder */}
+        <MealPlanBuilder 
+          key={selectedCustomer?.id} 
+          currentView={currentView}
+        />
       </div>
     </Layout>
   );

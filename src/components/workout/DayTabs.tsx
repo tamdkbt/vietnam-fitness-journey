@@ -7,22 +7,28 @@ import { CheckCircle } from "lucide-react";
 interface DayTabsProps {
   selectedDay: string;
   onDayChange: (day: string) => void;
-  calculateTotalDurationForDay: (day: string) => number;
-  children: React.ReactNode; // Add children prop to render TabsContent
+  calculateTotalDurationForDay?: (day: string) => number;
+  completionThreshold?: number;
+  showCompletionIndicator?: boolean;
+  days?: Array<{value: string, label: string}>;
+  children: React.ReactNode;
 }
 
 const DayTabs: React.FC<DayTabsProps> = ({ 
   selectedDay, 
   onDayChange,
   calculateTotalDurationForDay,
+  completionThreshold = MIN_WORKOUT_DURATION,
+  showCompletionIndicator = true,
+  days = DAYS,
   children
 }) => {
   return (
     <Tabs value={selectedDay} onValueChange={onDayChange}>
       <TabsList className="grid grid-cols-7 mb-4">
-        {DAYS.map((day) => {
-          const duration = calculateTotalDurationForDay(day.value);
-          const hasCompletedWorkout = duration >= MIN_WORKOUT_DURATION;
+        {days.map((day) => {
+          const duration = calculateTotalDurationForDay ? calculateTotalDurationForDay(day.value) : 0;
+          const hasCompletedWorkout = showCompletionIndicator && duration >= completionThreshold;
           
           return (
             <TabsTrigger key={day.value} value={day.value} className="relative">
