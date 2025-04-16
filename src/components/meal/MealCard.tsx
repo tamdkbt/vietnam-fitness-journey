@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FoodItem, Meal, FOODS, MEAL_TYPES } from "@/types/meal";
-import * as icons from "lucide-react";
+import { Coffee, Utensils, Pizza, Apple } from "lucide-react";
 import { getMealIcon } from "@/utils/mealUtils";
 
 interface MealCardProps {
@@ -11,7 +11,22 @@ interface MealCardProps {
 }
 
 const MealCard: React.FC<MealCardProps> = ({ meal }) => {
-  const MealIcon = icons[getMealIcon(meal.type) as keyof typeof icons];
+  const renderMealIcon = () => {
+    const iconName = getMealIcon(meal.type);
+    switch (iconName) {
+      case "Coffee":
+        return <Coffee className="h-5 w-5" />;
+      case "Utensils":
+        return <Utensils className="h-5 w-5" />;
+      case "Pizza":
+        return <Pizza className="h-5 w-5" />;
+      case "Apple":
+        return <Apple className="h-5 w-5" />;
+      default:
+        return <Utensils className="h-5 w-5" />;
+    }
+  };
+
   const mealNutrition = meal.foods.reduce((total, food) => {
     const foodDetails = FOODS.find(f => f.id === food.foodId);
     if (foodDetails) {
@@ -26,7 +41,7 @@ const MealCard: React.FC<MealCardProps> = ({ meal }) => {
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-primary/10 rounded-md text-primary">
-            <MealIcon className="h-5 w-5" />
+            {renderMealIcon()}
           </div>
           <CardTitle className="text-base">
             {MEAL_TYPES.find(t => t.value === meal.type)?.label || meal.type}
