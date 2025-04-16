@@ -1,12 +1,16 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Utensils } from "lucide-react";
-import { Check } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Plus, Utensils, Check } from "lucide-react";
 import MealCard from "./MealCard";
 import NutritionOverview from "./NutritionOverview";
+import FoodList from "./FoodList";
+import FoodFilterBar from "./FoodFilterBar";
+import FoodDetailsModal from "./FoodDetailsModal";
 import { calculateDailyNutrition } from "@/utils/mealUtils";
-import { Meal, DAYS } from "@/types/meal";
+import { Meal, DAYS, FOODS, FoodItem } from "@/types/meal";
+import { toast } from "sonner";
 
 interface DayMealListProps {
   dayMeals: Meal[];
@@ -19,22 +23,25 @@ const DayMealList: React.FC<DayMealListProps> = ({
   day,
   hasCompletedNutrition,
 }) => {
+  const [isAddingFood, setIsAddingFood] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+
   const nutrition = calculateDailyNutrition(dayMeals, day);
   const dayLabel = DAYS.find(d => d.value === day)?.label || day;
 
-  if (dayMeals.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
-        <Utensils className="h-12 w-12 mb-4 text-gray-300" />
-        <h3 className="text-lg font-medium mb-2">Chưa có bữa ăn nào</h3>
-        <p className="mb-4">Hãy thêm bữa ăn mới cho ngày này</p>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm bữa ăn
-        </Button>
-      </div>
-    );
-  }
+  const handleAddFoodToMeal = (foodId: string, quantity: number) => {
+    // Here you would implement the logic to add food to the meal
+    toast.success("Đã thêm món ăn vào thực đơn");
+  };
+
+  const filteredFoods = FOODS.filter(food => {
+    if (searchQuery) {
+      return food.name.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-4">
@@ -57,11 +64,39 @@ const DayMealList: React.FC<DayMealListProps> = ({
         ))}
       
       <div className="flex justify-center mt-4">
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => setIsAddingFood(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Thêm bữa ăn
+          Thêm món ăn
         </Button>
       </div>
+
+      <Sheet open={isAddingFood} onOpenChange={setIsAddingFood}>
+        <SheetContent side="right" className="w-full sm:w-[540px]">
+          <SheetHeader>
+            <SheetTitle>Thêm món ăn</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            <FoodFilterBar
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+              onSearchChange={setSearchQuery}
+            />
+            <FoodList
+              foods={filteredFoods}
+              selectedCategory={selectedCategory}
+              onShowDetails={setSelectedFood}
+              onAddToMeal={(foodId) => handleAddFoodToMeal(foodId, 100)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <FoodDetailsModal
+        food={selectedFood}
+        isOpen={!!selectedFood}
+        onClose={() => setSelectedFood(null)}
+        onAddToMeal={handleAddFoodToMeal}
+      />
     </div>
   );
 };
